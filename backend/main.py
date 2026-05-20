@@ -1,9 +1,14 @@
-from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile
+import time
+import logging
+from functools import lru_cache as ttl_cache
+
+from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, BackgroundTasks, Request
+from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 import bcrypt
 
@@ -19,9 +24,21 @@ from gemini_nudges import generate_nudge
 from vision import scan_receipt_or_food
 from config import get_settings
 
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("greenlens")
+
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="GreenLens API", version="1.0.0")
+app = FastAPI(
+    title="GreenLens API",
+    version="2.0.0",
+    description="Track Your Carbon. Change Your Campus. 🌿",
+)
 settings = get_settings()
 security = HTTPBearer()
 
@@ -33,7 +50,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Auth helpers ─────────────────────────────────────────────────────────────
+# ── Phase 3: Request Latency Middleware ───────────────────────────────────────
+
+@app.middleware("http")
+async def latency_logger(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = (time.perf_counter() - start) * 1000
+    logger.info(
+        "[%s] %s %s — %dms",
+        response.status_code,
+        request.method,
+        request.url.path,
+        duration_ms,
+    )
+    response.headers["X-Process-Time-Ms"] = f"{duration_ms:.2f}"
+    return response
+
+# ── Phase 2: In-Memory Cache ──────────────────────────────────────────────────
+
+_cache: dict = {}
+
+def get_cached(key: str, ttl_seconds: int = 30):
+    """Simple TTL cache backed by an in-process dict."""
+    entry = _cache.get(key)
+    if entry and (time.time() - entry["ts"]) < ttl_seconds:
+        return entry["value"]
+    return None
+
+def set_cached(key: str, value):
+    _cache[key] = {"value": value, "ts": time.time()}
+
+def invalidate_cache(*keys: str):
+    for k in keys:
+        _cache.pop(k, None)
+
+# ── Auth helpers ───────────────────────────────────────────────────────────────
 
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode(), hashed.encode())
@@ -44,7 +96,7 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: dict):
     to_encode = data.copy()
     to_encode["sub"] = str(to_encode["sub"])
-    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
@@ -70,23 +122,50 @@ def get_current_user(
         raise exc
     return user
 
-# ── CO2 category mapping ──────────────────────────────────────────────────────
+# ── CO2 category mapping ───────────────────────────────────────────────────────
 
 TYPE_TO_CATEGORY = {
     "transport": "car_km",
     "food": "vegetarian_meal",
-    "electricity": "india_kwh",
+    "electricity": "kwh",
     "purchases": "clothing_item",
     "waste": "plastic_kg",
 }
 
+# ── Phase 1: Background Task for AI Nudge ────────────────────────────────────
+
+def _create_nudge_task(user_id: int, activity_type: str, co2_kg: float, username: str):
+    """Runs in a background thread — non-blocking for the HTTP response."""
+    try:
+        nudge_text = generate_nudge(
+            activity_type=activity_type,
+            co2_amount=co2_kg,
+            user_name=username,
+            recent_activities=[],
+        )
+        if nudge_text:
+            from database import SessionLocal
+            db = SessionLocal()
+            try:
+                db.add(Nudge(user_id=user_id, content=nudge_text, category=activity_type))
+                db.commit()
+                logger.info("🤖 Nudge generated for user %d (%s)", user_id, activity_type)
+            finally:
+                db.close()
+    except Exception as e:
+        logger.error("Nudge generation failed: %s", e)
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
-@app.get("/")
+@app.get("/", tags=["Health"])
 def read_root():
-    return {"message": "GreenLens API v1.0.0 - Track Your Carbon. Change Your Campus."}
+    return {
+        "message": "GreenLens API v2.0.0 — Track Your Carbon. Change Your Campus. 🌿",
+        "status": "healthy",
+        "db": "neon_postgresql",
+    }
 
-@app.post("/api/auth/register", response_model=Token)
+@app.post("/api/auth/register", response_model=Token, tags=["Auth"])
 def register(user_data: UserRegister, db: Session = Depends(get_db)):
     existing = db.query(User).filter(
         (User.email == user_data.email) | (User.username == user_data.username)
@@ -112,7 +191,7 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
     token = create_access_token(data={"sub": db_user.id})
     return {"access_token": token, "token_type": "bearer", "user_id": db_user.id, "username": db_user.username}
 
-@app.post("/api/auth/login", response_model=Token)
+@app.post("/api/auth/login", response_model=Token, tags=["Auth"])
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_data.email).first()
     if not user or not verify_password(user_data.password, user.hashed_password):
@@ -121,21 +200,19 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
     token = create_access_token(data={"sub": user.id})
     return {"access_token": token, "token_type": "bearer", "user_id": user.id, "username": user.username}
 
-@app.get("/api/user/profile", response_model=UserResponse)
+@app.get("/api/user/profile", response_model=UserResponse, tags=["User"])
 def get_profile(user: User = Depends(get_current_user)):
     return user
 
-@app.post("/api/activities", response_model=ActivityResponse)
+@app.post("/api/activities", response_model=ActivityResponse, tags=["Activities"])
 def log_activity(
     activity: ActivityCreate,
+    background_tasks: BackgroundTasks,          # ← Phase 1: inject background tasks
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     activity_type = activity.activity_type.lower()
     category_key = TYPE_TO_CATEGORY.get(activity_type, "car_km")
-    if category_key == "india_kwh":
-        category_key = "kwh"
-    
     co2_kg = calculate_co2(activity_type, category_key, activity.value, activity.region)
 
     db_activity = Activity(
@@ -152,44 +229,48 @@ def log_activity(
     if stats:
         stats.total_co2_kg += co2_kg
         stats.weekly_co2_kg += co2_kg
-        stats.xp_points += int(co2_kg * 10)
+        stats.xp_points += max(1, int(co2_kg * 10))
         stats.trees_saved_equivalent = get_trees_equivalent(stats.total_co2_kg)
 
     db.commit()
     db.refresh(db_activity)
 
-    nudge_text = generate_nudge(
-        activity_type=activity.activity_type,
-        co2_amount=co2_kg,
-        user_name=user.username,
-        recent_activities=[]
+    # Phase 1: Fire-and-forget AI nudge — does NOT block the response
+    background_tasks.add_task(
+        _create_nudge_task,
+        user.id,
+        activity.activity_type,
+        co2_kg,
+        user.username,
     )
-    if nudge_text:
-        db.add(Nudge(user_id=user.id, content=nudge_text, category=activity.activity_type))
-        db.commit()
 
+    # Invalidate leaderboard & campus caches since XP changed
+    invalidate_cache("leaderboard", "campus_stats")
+
+    logger.info("✅ Activity logged: %s %.2f kg CO₂ (user=%s)", activity_type, co2_kg, user.username)
     return db_activity
 
-@app.post("/api/activities/scan")
+@app.post("/api/activities/scan", tags=["Activities"])
 async def scan_activity_image(
     file: UploadFile = File(...),
     user: User = Depends(get_current_user)
 ):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
-        
+
     image_bytes = await file.read()
     result = scan_receipt_or_food(image_bytes, file.content_type)
-    
+
     if not result:
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail="Failed to analyze image. Please ensure the Gemini API key is configured."
         )
-        
+
+    logger.info("📸 Vision scan complete (user=%s, type=%s)", user.username, result.get("activity_type"))
     return result
 
-@app.get("/api/activities", response_model=list[ActivityResponse])
+@app.get("/api/activities", response_model=list[ActivityResponse], tags=["Activities"])
 def get_activities(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -197,7 +278,7 @@ def get_activities(
 ):
     return db.query(Activity).filter(Activity.user_id == user.id).order_by(desc(Activity.created_at)).limit(limit).all()
 
-@app.get("/api/stats", response_model=UserStatsResponse)
+@app.get("/api/stats", response_model=UserStatsResponse, tags=["Stats"])
 def get_stats(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -209,7 +290,7 @@ def get_stats(
         db.commit()
     return stats
 
-@app.get("/api/dashboard", response_model=DashboardResponse)
+@app.get("/api/dashboard", response_model=DashboardResponse, tags=["Stats"])
 def get_dashboard(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -219,8 +300,14 @@ def get_dashboard(
     today_co2 = sum(a.co2_kg for a in activities if a.created_at.date() == datetime.now().date())
     return {"user": user, "stats": stats, "recent_activities": activities, "today_co2": today_co2}
 
-@app.get("/api/leaderboard", response_model=list[LeaderboardEntry])
+@app.get("/api/leaderboard", response_model=list[LeaderboardEntry], tags=["Social"])
 def get_leaderboard(db: Session = Depends(get_db), limit: int = 50):
+    # Phase 2: Return cached result if fresh (30s TTL)
+    cached = get_cached("leaderboard", ttl_seconds=30)
+    if cached:
+        logger.info("⚡ Leaderboard served from cache")
+        return cached
+
     rows = db.query(
         User.username, UserStats.xp_points, UserStats.weekly_co2_kg,
         UserStats.streak_days, User.campus
@@ -237,9 +324,11 @@ def get_leaderboard(db: Session = Depends(get_db), limit: int = 50):
             "streak": streak,
             "badge": badge
         })
+
+    set_cached("leaderboard", result)
     return result
 
-@app.get("/api/nudges", response_model=list[NudgeResponse])
+@app.get("/api/nudges", response_model=list[NudgeResponse], tags=["AI"])
 def get_nudges(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -247,7 +336,7 @@ def get_nudges(
 ):
     return db.query(Nudge).filter(Nudge.user_id == user.id).order_by(desc(Nudge.created_at)).limit(limit).all()
 
-@app.put("/api/nudges/{nudge_id}")
+@app.put("/api/nudges/{nudge_id}", tags=["AI"])
 def mark_nudge_read(
     nudge_id: int,
     user: User = Depends(get_current_user),
@@ -260,17 +349,26 @@ def mark_nudge_read(
     db.commit()
     return {"message": "Nudge marked as read"}
 
-@app.get("/api/campus-stats")
+@app.get("/api/campus-stats", tags=["Social"])
 def get_campus_stats(db: Session = Depends(get_db)):
+    # Phase 2: Cache campus stats for 30 seconds
+    cached = get_cached("campus_stats", ttl_seconds=30)
+    if cached:
+        logger.info("⚡ Campus stats served from cache")
+        return cached
+
     total_users = db.query(func.count(User.id)).scalar()
     total_co2 = db.query(func.sum(UserStats.total_co2_kg)).scalar() or 0
-    return {
+    result = {
         "students_tracking": total_users,
         "total_co2_kg": round(total_co2, 2),
         "trees_equivalent": int(total_co2 / 21),
-        "campus": "Parul University"
+        "campus": "Parul University",
     }
+
+    set_cached("campus_stats", result)
+    return result
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
