@@ -1,0 +1,98 @@
+@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background: #0d1f0f;
+  color: #fff;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.glassmorphism {
+  background: rgba(13, 31, 15, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(105, 240, 174, 0.2);
+}
+
+.glow-text {
+  color: #69f0ae;
+  text-shadow: 0 0 20px rgba(105, 240, 174, 0.5);
+}
+
+.glow-border {
+  border: 2px solid #69f0ae;
+  box-shadow: 0 0 20px rgba(105, 240, 174, 0.3);
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(105, 240, 174, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(105, 240, 174, 0.6);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.btn-primary {
+  @apply px-6 py-3 bg-emerald-bright hover:bg-emerald-glow text-forest font-bold rounded-lg transition-all duration-300 hover:shadow-lg;
+}
+
+.btn-secondary {
+  @apply px-6 py-3 border-2 border-emerald-glow text-emerald-glow hover:bg-emerald-glow hover:text-forest rounded-lg transition-all duration-300 font-bold;
+}
+
+.card {
+  @apply glassmorphism rounded-xl p-6 hover:border-emerald-glow transition-all duration-300;
+}

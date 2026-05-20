@@ -1,0 +1,117 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.venv
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/cache
+.yarn/integrity
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Package managers
+package-lock.json
+yarn.lock
+
+# Logs
+logs/
+*.log
+lerna-debug.log*
+
+# OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+*.swp
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Misc
+.cache
+.parcel-cache
+.eslintcache
+.stylelintcache
+
+# Testing
+.nyc_output
+coverage/
+.pytest_cache/
+htmlcov/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Git
+.gitkeep
+
+# Secrets (never commit these!)
+*.pem
+*.key
+*.crt
+secrets/
+credentials.json
+apikey.txt
