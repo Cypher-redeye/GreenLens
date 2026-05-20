@@ -7,6 +7,7 @@ export const LogPage = () => {
   const [value, setValue] = useState(0);
   const [unit, setUnit] = useState("km");
   const [loading, setLoading] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [success, setSuccess] = useState("");
   const [co2Preview, setCo2Preview] = useState(0);
 
@@ -39,6 +40,7 @@ export const LogPage = () => {
         value,
         unit,
         description: `Logged ${activity} activity`,
+        region: localStorage.getItem("globalRegion") || "IN"
       });
       setSuccess("Activity logged successfully! 🌱");
       setValue(0);
@@ -48,6 +50,29 @@ export const LogPage = () => {
       console.error("Failed to log activity:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleScan = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setScanning(true);
+    try {
+      const res = await activitiesAPI.scan(file);
+      const data = res.data;
+      if (data && data.activity_type) {
+        setActivity(data.activity_type);
+        setUnit(data.unit || activityTypes[data.activity_type].units[0]);
+        handleValueChange(data.value);
+        setSuccess("AI successfully analyzed your image! ✨");
+        setTimeout(() => setSuccess(""), 4000);
+      }
+    } catch (err) {
+      console.error("Scanning failed:", err);
+      alert("Failed to analyze image. Check API key or image format.");
+    } finally {
+      setScanning(false);
     }
   };
 
@@ -65,6 +90,27 @@ export const LogPage = () => {
               {success}
             </div>
           )}
+
+          {/* AI Scanner Section */}
+          <div className="mb-8 p-6 glassmorphism-glow rounded-xl border border-emerald-glow relative overflow-hidden">
+            <div className="absolute inset-0 bg-emerald-glow/5 animate-pulse-glow pointer-events-none"></div>
+            <h2 className="text-xl font-bold mb-2 flex items-center gap-2 glow-text">
+              <span className="text-2xl">📸</span> Gemini Vision Scan
+            </h2>
+            <p className="text-sm text-gray-300 mb-4">
+              Upload a grocery receipt or a meal photo. Our AI will automatically estimate its carbon footprint!
+            </p>
+            <label className="btn-secondary w-full flex justify-center items-center cursor-pointer relative z-10">
+              {scanning ? "Analyzing Image..." : "Upload Image to Scan"}
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                onChange={handleScan}
+                disabled={scanning}
+              />
+            </label>
+          </div>
 
           {/* Activity Type Selection */}
           <div className="mb-8">

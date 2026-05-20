@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -16,6 +16,7 @@ from schemas import (
 )
 from emission_factors import calculate_co2, get_trees_equivalent
 from gemini_nudges import generate_nudge
+from vision import scan_receipt_or_food
 from config import get_settings
 
 Base.metadata.create_all(bind=engine)
@@ -132,7 +133,10 @@ def log_activity(
 ):
     activity_type = activity.activity_type.lower()
     category_key = TYPE_TO_CATEGORY.get(activity_type, "car_km")
-    co2_kg = calculate_co2(activity_type, category_key, activity.value)
+    if category_key == "india_kwh":
+        category_key = "kwh"
+    
+    co2_kg = calculate_co2(activity_type, category_key, activity.value, activity.region)
 
     db_activity = Activity(
         user_id=user.id,
@@ -165,6 +169,25 @@ def log_activity(
         db.commit()
 
     return db_activity
+
+@app.post("/api/activities/scan")
+async def scan_activity_image(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user)
+):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+        
+    image_bytes = await file.read()
+    result = scan_receipt_or_food(image_bytes, file.content_type)
+    
+    if not result:
+        raise HTTPException(
+            status_code=500, 
+            detail="Failed to analyze image. Please ensure the Gemini API key is configured."
+        )
+        
+    return result
 
 @app.get("/api/activities", response_model=list[ActivityResponse])
 def get_activities(

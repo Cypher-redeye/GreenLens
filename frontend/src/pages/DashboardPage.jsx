@@ -57,9 +57,15 @@ export const DashboardPage = () => {
   return (
     <div className="pt-24 min-h-screen bg-forest px-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold glow-text mb-8">
-          Your Carbon Dashboard
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold glow-text">
+            Your Carbon Dashboard
+          </h1>
+          <button className="btn-secondary flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            Share Green Card
+          </button>
+        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -91,16 +97,23 @@ export const DashboardPage = () => {
             <h2 className="text-xl font-bold mb-4">Weekly Emissions</h2>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={weeklyData}>
-                <CartesianGrid stroke="#69F0AE40" />
+                <defs>
+                  <linearGradient id="colorCo2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#00FF66" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#00FF66" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="rgba(105, 240, 174, 0.1)" strokeDasharray="3 3" />
                 <XAxis dataKey="day" stroke="#69F0AE" />
                 <YAxis stroke="#69F0AE" />
                 <Tooltip
                   contentStyle={{
-                    background: "#0D1F0F",
+                    background: "rgba(4, 10, 5, 0.9)",
                     border: "1px solid #69F0AE",
+                    borderRadius: "8px"
                   }}
                 />
-                <Bar dataKey="co2" fill="#69F0AE" />
+                <Bar dataKey="co2" fill="url(#colorCo2)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

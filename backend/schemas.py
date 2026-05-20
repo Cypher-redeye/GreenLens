@@ -37,6 +37,7 @@ class ActivityCreate(BaseModel):
     value: float
     unit: str
     description: Optional[str] = None
+    region: str = "IN"
 
 class ActivityResponse(BaseModel):
     id: int

@@ -25,6 +25,15 @@ export const authAPI = {
 export const activitiesAPI = {
   log: (data) => api.post("/api/activities", data),
   getList: (limit = 10) => api.get("/api/activities", { params: { limit } }),
+  scan: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post("/api/activities/scan", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
 };
 
 export const statsAPI = {

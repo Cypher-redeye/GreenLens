@@ -18,18 +18,27 @@ body,
 }
 
 body {
-  background: #0d1f0f;
+  background: #040A05;
   color: #fff;
   font-family:
+    "Syne",
     system-ui,
     -apple-system,
     sans-serif;
 }
 
 .glassmorphism {
-  background: rgba(13, 31, 15, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(105, 240, 174, 0.2);
+  background: rgba(13, 31, 15, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(105, 240, 174, 0.15);
+  box-shadow: inset 0 0 20px rgba(105, 240, 174, 0.05);
+}
+
+.glassmorphism-glow {
+  background: rgba(13, 31, 15, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(105, 240, 174, 0.4);
+  box-shadow: 0 0 30px rgba(105, 240, 174, 0.15), inset 0 0 20px rgba(105, 240, 174, 0.1);
 }
 
 .glow-text {
@@ -94,5 +103,9 @@ body {
 }
 
 .card {
-  @apply glassmorphism rounded-xl p-6 hover:border-emerald-glow transition-all duration-300;
+  @apply glassmorphism rounded-xl p-6 transition-all duration-300;
+}
+
+.card:hover {
+  @apply glassmorphism-glow;
 }
