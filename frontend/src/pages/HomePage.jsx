@@ -20,17 +20,11 @@ export const HomePage = () => {
         console.error("Failed to fetch campus stats:", err);
       }
     };
-
     fetchStats();
-    const interval = setInterval(() => {
-      setCo2Counter((prev) => prev + Math.random() * 0.5);
-    }, 3000);
-
-    return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="pt-20 min-h-screen bg-forest overflow-hidden">
+    <div className="pt-20 min-h-screen bg-forest-dark overflow-hidden">
       <div className="absolute inset-0">
         {[...Array(50)].map((_, i) => (
           <div
@@ -119,7 +113,7 @@ export const HomePage = () => {
               <div className="text-5xl font-bold glow-text">
                 {co2Counter.toFixed(1)}
               </div>
-              <div className="text-sm text-gray-300">kg CO₂ SAVED TODAY</div>
+              <div className="text-sm text-gray-300">kg CO₂ TRACKED TOTAL</div>
             </div>
           </div>
         </div>
