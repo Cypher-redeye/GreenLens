@@ -6,6 +6,10 @@
 
 A production-grade AI-powered sustainability platform built for Indian college students to understand, track, and reduce their personal carbon footprint.
 
+### 🌐 Live Production Application
+* **Frontend UI (Vercel):** [https://green-lens-tau.vercel.app](https://green-lens-tau.vercel.app/)
+* **Backend API (Render):** [https://greenlens-backend-n3ws.onrender.com](https://greenlens-backend-n3ws.onrender.com/)
+
 ---
 
 ## 📋 Table of Contents
