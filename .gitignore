@@ -115,3 +115,5 @@ docker-compose.override.yml
 secrets/
 credentials.json
 apikey.txt
+.vercel
+.env*.local

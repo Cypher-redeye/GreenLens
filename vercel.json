@@ -1,5 +1,7 @@
 {
-  "cleanUrls": true,
+  "buildCommand": "npm run build --prefix frontend",
+  "outputDirectory": "frontend/dist",
+  "devCommand": "npm run dev --prefix frontend",
   "routes": [
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }

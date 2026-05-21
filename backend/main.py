@@ -47,6 +47,10 @@ origins = [
     "http://127.0.0.1:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://green-lens-tau.vercel.app",
+    "https://green-lens-om-sharmas-projects-322ceb48.vercel.app",
+    "https://green-lens-om2317160-9624-om-sharmas-projects-322ceb48.vercel.app",
+    "https://green-lens.vercel.app",
 ]
 if settings.CORS_ORIGINS:
     extra_origins = [org.strip().rstrip("/") for org in settings.CORS_ORIGINS.split(",") if org.strip()]
