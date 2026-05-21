@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { Mail, Lock, User, Building } from "lucide-react";
 
@@ -81,12 +81,12 @@ export const LoginPage = () => {
 
           <p className="text-center text-sm text-gray-400 mt-6">
             No account?{" "}
-            <a
-              href="/register"
+            <Link
+              to="/register"
               className="text-emerald-glow hover:text-emerald-bright"
             >
               Sign up
-            </a>
+            </Link>
           </p>
         </div>
       </div>
@@ -198,12 +198,12 @@ export const RegisterPage = () => {
 
           <p className="text-center text-sm text-gray-400 mt-6">
             Already have account?{" "}
-            <a
-              href="/login"
+            <Link
+              to="/login"
               className="text-emerald-glow hover:text-emerald-bright"
             >
               Login
-            </a>
+            </Link>
           </p>
         </div>
       </div>

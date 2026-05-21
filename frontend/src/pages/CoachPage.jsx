@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { statsAPI, nudgesAPI } from "../api";
 import { MessageCircle, CheckCircle, Leaf, Zap, TrendingDown } from "lucide-react";
 
@@ -157,9 +158,9 @@ export const CoachPage = () => {
             <div className="text-center py-8 text-gray-400 text-sm">
               <p>No nudges yet.</p>
               <p className="mt-2">
-                <a href="/log" className="text-emerald-glow underline">
+                <Link to="/log" className="text-emerald-glow underline">
                   Log an activity
-                </a>{" "}
+                </Link>{" "}
                 and Gemini will generate a personalised coaching message for you!
               </p>
             </div>

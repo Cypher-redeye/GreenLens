@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { campusAPI, activitiesAPI } from "../api";
 import {
   AreaChart,
@@ -101,9 +102,9 @@ export const ImpactPage = () => {
           {journeyData.length === 0 ? (
             <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">
                No activities logged yet.
-               <a href="/log" className="text-neon-green underline ml-1">
+               <Link to="/log" className="text-neon-green underline ml-1">
                  Start logging to see your impact!
-               </a>
+               </Link>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>

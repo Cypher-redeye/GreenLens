@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { leaderboardAPI } from "../api";
 import { Trophy, TrendingUp } from "lucide-react";
 
@@ -42,7 +43,7 @@ export const LeaderboardPage = () => {
             <p className="text-lg font-bold mb-2 text-neon-green">No entries yet!</p>
             <p className="text-sm text-white/40">
               Be the first on the leaderboard.
-              <a href="/log" className="text-neon-green underline ml-1">Log an activity</a>
+              <Link to="/log" className="text-neon-green underline ml-1">Log an activity</Link>
               to earn XP.
             </p>
           </div>
