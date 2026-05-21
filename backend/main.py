@@ -49,7 +49,10 @@ origins = [
     "http://127.0.0.1:5173",
 ]
 if settings.CORS_ORIGINS:
-    extra_origins = [org.strip() for org in settings.CORS_ORIGINS.split(",") if org.strip()]
+    extra_origins = [org.strip().rstrip("/") for org in settings.CORS_ORIGINS.split(",") if org.strip()]
+    origins.extend(extra_origins)
+if settings.CORS_ORIGIN:
+    extra_origins = [org.strip().rstrip("/") for org in settings.CORS_ORIGIN.split(",") if org.strip()]
     origins.extend(extra_origins)
 
 app.add_middleware(

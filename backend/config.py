@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     ENVIRONMENT: str = "development"
     CORS_ORIGINS: str = ""
+    CORS_ORIGIN: str = ""
 
     class Config:
         env_file = ".env"
