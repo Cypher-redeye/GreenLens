@@ -4,13 +4,34 @@ export default {
   theme: {
     extend: {
       colors: {
-        forest: "#0D1F0F",
-        "forest-dark": "#040A05",
-        "emerald-glow": "#69F0AE",
+        /* Backgrounds */
+        deep:     "#03070A",
+        surface:  "#090F0C",
+        elevated: "#0F1A12",
+
+        /* Legacy aliases */
+        forest:      "#0D1F0F",
+        "forest-dark": "#03070A",
+
+        /* Greens */
+        "emerald-glow":   "#69F0AE",
         "emerald-bright": "#4CAF50",
-        "neon-green": "#00FF66",
-        "glass-border": "rgba(105, 240, 174, 0.15)",
-        "glass-bg": "rgba(13, 31, 15, 0.6)",
+        "neon-green":     "#5EFFA0",
+
+        /* Accent */
+        gold: "#F0B429",
+
+        /* Borders */
+        "glass-border": "rgba(105, 240, 174, 0.08)",
+      },
+      fontFamily: {
+        sans:    ["Inter", "system-ui", "sans-serif"],
+        display: ["Space Grotesk", "sans-serif"],
+        mono:    ["JetBrains Mono", "monospace"],
+      },
+      borderRadius: {
+        "2xl": "16px",
+        "3xl": "24px",
       },
     },
   },

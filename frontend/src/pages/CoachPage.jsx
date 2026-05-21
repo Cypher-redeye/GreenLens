@@ -96,10 +96,10 @@ export const CoachPage = () => {
   const tips = generateTips();
 
   return (
-    <div className="pt-24 min-h-screen bg-forest-dark px-4 pb-10">
+    <div className="pt-24 min-h-screen bg-deep px-4 pb-10">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold glow-text mb-2">🤖 Your AI Coach</h1>
-        <p className="text-gray-300 mb-8">
+        <h1 className="heading-xl text-neon-green mb-2">🤖 Your AI Coach</h1>
+        <p className="text-white/40 mb-8 max-w-2xl">
           Personalised tips based on your actual carbon data
         </p>
 
@@ -107,26 +107,26 @@ export const CoachPage = () => {
         {stats && (
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="card text-center py-4">
-              <Zap className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-yellow-400">{stats.xp_points}</div>
-              <div className="text-xs text-gray-400">XP Points</div>
+              <Zap className="w-6 h-6 text-neon-green mx-auto mb-2" />
+              <div className="text-2xl font-bold text-neon-green">{stats.xp_points}</div>
+              <div className="text-xs text-white/30">XP Points</div>
             </div>
             <div className="card text-center py-4">
-              <TrendingDown className="w-6 h-6 text-emerald-glow mx-auto mb-2" />
-              <div className="text-2xl font-bold glow-text">{stats.weekly_co2_kg?.toFixed(1)} kg</div>
-              <div className="text-xs text-gray-400">Weekly CO₂</div>
+              <TrendingDown className="w-6 h-6 text-neon-green mx-auto mb-2" />
+              <div className="text-2xl font-bold text-neon-green">{stats.weekly_co2_kg?.toFixed(1)} kg</div>
+              <div className="text-xs text-white/30">Weekly CO₂</div>
             </div>
             <div className="card text-center py-4">
-              <Leaf className="w-6 h-6 text-green-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-green-400">{stats.trees_saved_equivalent}</div>
-              <div className="text-xs text-gray-400">Trees Saved</div>
+              <Leaf className="w-6 h-6 text-neon-green mx-auto mb-2" />
+              <div className="text-2xl font-bold text-neon-green">{stats.trees_saved_equivalent}</div>
+              <div className="text-xs text-white/30">Trees Saved</div>
             </div>
           </div>
         )}
 
         {/* Personalised Tips */}
-        <div className="card mb-8">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+        <div className="card glass-mid mb-8">
+          <h2 className="heading-lg text-neon-green mb-6 flex items-center gap-2">
             <MessageCircle className="w-6 h-6" /> Personalised Tips
           </h2>
           {tips.length === 0 ? (
@@ -151,8 +151,8 @@ export const CoachPage = () => {
         </div>
 
         {/* AI Nudges History */}
-        <div className="card">
-          <h2 className="text-2xl font-bold mb-6">Gemini AI Nudges</h2>
+        <div className="card glass-mid">
+          <h2 className="heading-lg text-neon-green mb-6">Gemini AI Nudges</h2>
           {nudges.length === 0 ? (
             <div className="text-center py-8 text-gray-400 text-sm">
               <p>No nudges yet.</p>

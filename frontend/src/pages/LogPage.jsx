@@ -77,14 +77,14 @@ export const LogPage = () => {
   };
 
   return (
-    <div className="pt-24 min-h-screen bg-forest px-4 pb-10">
+    <div className="pt-24 min-h-screen bg-deep px-4 pb-10">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-bold glow-text mb-2 text-center">
+        <h1 className="heading-xl text-neon-green mb-2 text-center">
           Log Your Impact
         </h1>
-        <p className="text-gray-300 text-center mb-8">Takes under 60 seconds</p>
+        <p className="text-white/40 text-center mb-8 max-w-2xl">Takes under 60 seconds</p>
 
-        <div className="card">
+        <div className="card glass-mid">
           {success && (
             <div className="bg-emerald-bright/20 border border-emerald-bright text-emerald-glow px-4 py-3 rounded-lg mb-6">
               {success}
@@ -92,12 +92,12 @@ export const LogPage = () => {
           )}
 
           {/* AI Scanner Section */}
-          <div className="mb-8 p-6 glassmorphism-glow rounded-xl border border-emerald-glow relative overflow-hidden">
-            <div className="absolute inset-0 bg-emerald-glow/5 animate-pulse-glow pointer-events-none"></div>
-            <h2 className="text-xl font-bold mb-2 flex items-center gap-2 glow-text">
+          <div className="mb-8 p-6 glass-mid rounded-xl border border-emerald-glow relative overflow-hidden">
+            <div className="absolute inset-0 bg-neon-green/5 animate-pulse-glow pointer-events-none"></div>
+            <h2 className="heading-lg text-neon-green mb-6 flex items-center gap-2">
               <span className="text-2xl">📸</span> Gemini Vision Scan
             </h2>
-            <p className="text-sm text-gray-300 mb-4">
+            <p className="text-sm text-white/40 mb-4">
               Upload a grocery receipt or a meal photo. Our AI will automatically estimate its carbon footprint!
             </p>
             <label className="btn-secondary w-full flex justify-center items-center cursor-pointer relative z-10">
@@ -124,8 +124,8 @@ export const LogPage = () => {
                   onClick={() => handleActivityChange(key)}
                   className={`py-3 rounded-lg font-bold transition-all ${
                     activity === key
-                      ? "bg-emerald-bright text-forest glow-border"
-                      : "bg-forest/50 border border-emerald-glow/30 hover:border-emerald-glow"
+                      ? "bg-emerald-bright text-deep glow-border"
+                      : "bg-deep/50 border border-emerald-glow/30 hover:border-emerald-glow"
                   }`}
                 >
                   {label}
@@ -146,7 +146,7 @@ export const LogPage = () => {
               step="0.1"
               value={value}
               onChange={(e) => handleValueChange(parseFloat(e.target.value))}
-              className="w-full h-2 bg-forest/50 rounded-lg appearance-none cursor-pointer accent-emerald-glow"
+              className="w-full h-2 bg-deep/50 rounded-lg appearance-none cursor-pointer accent-emerald-glow"
             />
             <div className="flex gap-2 mt-4">
               {[10, 25, 50, 75, 100].map((v) => (
@@ -163,12 +163,13 @@ export const LogPage = () => {
 
           {/* CO2 Preview */}
           <div className="mb-8 p-6 bg-gradient-to-r from-emerald-bright/10 to-emerald-glow/10 rounded-lg border border-emerald-glow/30">
-            <div className="text-center">
-              <div className="text-5xl font-bold glow-text">
+            <div className="card glass-mid text-center py-4 text-white/40">
+              <h1 className="heading-xl text-neon-green mb-2">🤖 Your AI Coach</h1>
+              <div className="text-5xl font-bold text-neon-green">
                 {co2Preview.toFixed(2)}
               </div>
-              <div className="text-sm text-gray-300 mt-2">kg CO₂ Impact</div>
-              <div className="text-xs text-gray-400 mt-1">
+              <div className="text-sm text-white/40 mt-2">kg CO₂ Impact</div>
+              <div className="text-xs text-white/30 mt-1">
                 = {(co2Preview / 21).toFixed(2)} trees
               </div>
             </div>

@@ -29,22 +29,20 @@ export const LeaderboardPage = () => {
   }
 
   return (
-    <div className="pt-24 min-h-screen bg-forest-dark px-4 pb-10">
+    <div className="pt-24 min-h-screen bg-deep px-4 pb-10">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold glow-text mb-2 flex items-center gap-3">
+        <h1 className="heading-xl text-neon-green mb-2 flex items-center gap-3">
           <Trophy className="w-10 h-10" /> Campus Eco Warriors
         </h1>
-        <p className="text-gray-400 mb-8">Ranked by XP earned from reducing your carbon footprint</p>
+        <p className="text-white/40 mb-8 max-w-2xl">Ranked by XP earned from reducing your carbon footprint</p>
 
         {leaderboard.length === 0 ? (
-          <div className="card text-center py-16 text-gray-400">
+          <div className="card glass-mid text-center py-16">
             <Trophy className="w-16 h-16 mx-auto mb-4 opacity-30" />
-            <p className="text-lg font-bold mb-2">No entries yet!</p>
-            <p className="text-sm">
-              Be the first on the leaderboard.{" "}
-              <a href="/log" className="text-emerald-glow underline">
-                Log an activity
-              </a>{" "}
+            <p className="text-lg font-bold mb-2 text-neon-green">No entries yet!</p>
+            <p className="text-sm text-white/40">
+              Be the first on the leaderboard.
+              <a href="/log" className="text-neon-green underline ml-1">Log an activity</a>
               to earn XP.
             </p>
           </div>
@@ -53,26 +51,26 @@ export const LeaderboardPage = () => {
             {leaderboard.map((entry) => (
               <div
                 key={entry.rank}
-                className={`card flex items-center justify-between p-4 ${
+                className={`card glass-mid flex items-center justify-between p-4 ${
                   entry.rank <= 3 ? "glow-border" : ""
                 }`}
               >
                 <div className="flex items-center gap-4 flex-1">
-                  <div className="text-3xl font-bold glow-text w-12 text-center">
+                  <div className="text-3xl font-bold text-neon-green w-12 text-center">
                     {entry.rank}
                   </div>
                   <div>
-                    <div className="font-bold text-lg">{entry.username}</div>
-                    <div className="text-xs text-gray-400">
+                    <div className="font-bold text-lg text-white/80">{entry.username}</div>
+                    <div className="text-xs text-white/30">
                       🔥 Streak: {entry.streak ?? 0} days
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold glow-text flex items-center gap-2">
+                  <div className="text-2xl font-bold text-neon-green flex items-center gap-2">
                     <TrendingUp className="w-5 h-5" /> {entry.xp_points}
                   </div>
-                  <div className="text-xs text-gray-400">
+                  <div className="text-xs text-white/30">
                     {(entry.weekly_co2_reduction ?? 0).toFixed(1)} kg CO₂
                   </div>
                 </div>

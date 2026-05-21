@@ -65,47 +65,45 @@ export const ImpactPage = () => {
   });
 
   return (
-    <div className="pt-24 min-h-screen bg-forest-dark px-4 pb-10">
+    <div className="pt-24 min-h-screen bg-deep px-4 pb-10">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold glow-text mb-2">🌍 Campus Impact</h1>
-        <p className="text-gray-300 mb-8">
-          Real data. Real change. Parul University live stats.
-        </p>
+          <h1 className="heading-xl text-neon-green mb-2">🌍 Campus Impact</h1>
+          <p className="text-white/40 mb-8 max-w-2xl">Real data. Real change. Parul University live stats.</p>
 
         {/* Impact Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <ImpactCard
-            icon={Leaf}
-            value={campusStats.trees_equivalent}
-            label="Trees Saved"
-            desc="Equivalent trees planted this semester"
-          />
-          <ImpactCard
-            icon={TrendingDown}
-            value={`${campusStats.total_co2_kg.toFixed(1)} kg`}
-            label="CO₂ Tracked"
-            desc="Total carbon footprint logged"
-          />
-          <ImpactCard
-            icon={Users}
-            value={campusStats.students_tracking}
-            label="Eco Warriors"
-            desc="Active students participating"
-          />
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <ImpactCard
+              icon={Leaf}
+              value={campusStats.trees_equivalent}
+              label="Trees Saved"
+              desc="Equivalent trees planted this semester"
+            />
+            <ImpactCard
+              icon={TrendingDown}
+              value={`${campusStats.total_co2_kg.toFixed(1)} kg`}
+              label="CO₂ Tracked"
+              desc="Total carbon footprint logged"
+            />
+            <ImpactCard
+              icon={Users}
+              value={campusStats.students_tracking}
+              label="Eco Warriors"
+              desc="Active students participating"
+            />
+          </div>
 
         {/* Real Cumulative CO₂ Journey */}
         <div className="card mb-8">
-          <h2 className="text-2xl font-bold mb-2">Your Cumulative CO₂ Journey</h2>
-          <p className="text-sm text-gray-400 mb-6">
+          <h2 className="heading-lg text-neon-green mb-2">Your Cumulative CO₂ Journey</h2>
+          <p className="text-white/50 mb-6">
             Based on your last {activities.length} logged activities
           </p>
           {journeyData.length === 0 ? (
             <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">
-              No activities logged yet.{" "}
-              <a href="/log" className="text-emerald-glow underline ml-1">
-                Start logging to see your impact!
-              </a>
+               No activities logged yet.
+               <a href="/log" className="text-neon-green underline ml-1">
+                 Start logging to see your impact!
+               </a>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
@@ -144,27 +142,27 @@ export const ImpactPage = () => {
         </div>
 
         {/* Mission */}
-        <div className="card bg-gradient-to-r from-emerald-bright/10 to-emerald-glow/10 border-emerald-bright">
-          <h2 className="text-2xl font-bold mb-4">🌱 Our Mission</h2>
-          <p className="text-gray-200 leading-relaxed">
-            GreenLens empowers Indian college students to understand and reduce
-            their personal carbon footprint. Together, we're building a culture
-            of sustainability — one logged activity at a time. Every action
-            counts, every student matters, and every campus can change.
-          </p>
-        </div>
+          <div className="card glass-mid">
+            <h2 className="heading-lg text-neon-green mb-4">🌱 Our Mission</h2>
+            <p className="text-white/40 leading-relaxed">
+              GreenLens empowers Indian college students to understand and reduce
+              their personal carbon footprint. Together, we're building a culture
+              of sustainability — one logged activity at a time. Every action
+              counts, every student matters, and every campus can change.
+            </p>
+          </div>
       </div>
     </div>
   );
 };
 
 const ImpactCard = ({ icon: Icon, value, label, desc }) => (
-  <div className="card">
+  <div className="card glass-mid">
     <div className="flex items-center gap-3 mb-4">
-      <Icon className="w-8 h-8 text-emerald-glow" />
-      <span className="text-sm text-gray-400 uppercase tracking-widest">{label}</span>
+      <Icon className="w-8 h-8 text-neon-green" />
+      <span className="text-sm text-white/30 uppercase tracking-widest">{label}</span>
     </div>
-    <div className="text-4xl font-bold glow-text mb-2">{value}</div>
-    <div className="text-xs text-gray-400">{desc}</div>
+    <div className="text-4xl font-bold text-neon-green mb-2">{value}</div>
+    <div className="text-xs text-white/40">{desc}</div>
   </div>
 );
