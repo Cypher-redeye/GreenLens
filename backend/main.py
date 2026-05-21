@@ -181,6 +181,7 @@ def read_root():
         "message": "GreenLens API v2.0.0 — Track Your Carbon. Change Your Campus. 🌿",
         "status": "healthy",
         "db": "neon_postgresql",
+        "cors_patched": True,
     }
 
 @app.post("/api/auth/register", response_model=Token, tags=["Auth"])
