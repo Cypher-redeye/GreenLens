@@ -10,6 +10,7 @@ A production-grade AI-powered sustainability platform built for Indian college s
 
 ## 📋 Table of Contents
 
+- [Application Preview](#-application-preview)
 - [Quick Start](#-quick-start)
 - [Project Structure](#-project-structure)
 - [Features](#-features)
@@ -19,6 +20,25 @@ A production-grade AI-powered sustainability platform built for Indian college s
 - [API Documentation](#-api-documentation)
 - [Architecture](#-architecture)
 - [Team](#-team)
+
+---
+
+## 📸 Application Preview
+
+### 🏠 Homepage
+![Homepage](screenshots/homepage.png)
+
+### 📊 Personal Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### 📝 Activity Logging (Gemini Vision Scan)
+![Log Activity](screenshots/log_activity.png)
+
+### 🤖 Personal AI Coach
+![AI Coach](screenshots/ai_coach.png)
+
+### 🏆 Campus Leaderboard
+![Leaderboard](screenshots/leaderboard.png)
 
 ---
 
