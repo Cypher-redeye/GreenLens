@@ -20,7 +20,7 @@ def scan_receipt_or_food(image_bytes: bytes, mime_type: str) -> Optional[Dict]:
         
     try:
         initialize_gemini()
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-flash-latest")
         
         prompt = """
         You are an eco-friendly AI assistant. The user has uploaded an image of a grocery receipt, a meal, or a transit ticket.
