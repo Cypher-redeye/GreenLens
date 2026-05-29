@@ -23,7 +23,7 @@ def generate_nudge(
     
     try:
         initialize_gemini()
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-flash-latest")
         
         activity_summary = ", ".join([f"{a['type']}: {a['value']} {a['unit']}" for a in recent_activities[-3:]])
         
