@@ -1,4 +1,9 @@
 # 🌿 GreenLens - AI-Powered Carbon Tracking Platform
+![React](https://img.shields.io/badge/Frontend-React-blue)
+![FastAPI](https://img.shields.io/badge/Backend-FastAPI-green)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-blue)
+![Gemini AI](https://img.shields.io/badge/AI-Gemini-orange)
+![License](https://img.shields.io/badge/Status-Production_Ready-success) 
 
 **Smart & Digital Innovation | Sustainability Hackathon 2026 | Parul University**
 
@@ -836,3 +841,6 @@ Built with ❤️ for Parul University Sustainability Hackathon 2026
 **Last Updated:** May 20, 2026  
 **Status:** Production Ready  
 **Version:** 1.0.0
+---
+
+⭐ If you like this project, consider starring the repository and contributing to sustainable innovation.
