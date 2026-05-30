@@ -38,6 +38,9 @@ class ActivityCreate(BaseModel):
     unit: str
     description: Optional[str] = None
     region: str = "IN"
+    image_hash: Optional[str] = None
+    receipt_id: Optional[str] = None
+    sdg_goal: Optional[str] = None
 
 class ActivityResponse(BaseModel):
     id: int
@@ -46,6 +49,9 @@ class ActivityResponse(BaseModel):
     unit: str
     co2_kg: float
     created_at: datetime
+    image_hash: Optional[str] = None
+    receipt_id: Optional[str] = None
+    sdg_goal: Optional[str] = None
     
     class Config:
         from_attributes = True

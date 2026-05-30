@@ -21,7 +21,7 @@ from schemas import (
 )
 from emission_factors import calculate_co2, get_trees_equivalent
 from gemini_nudges import generate_nudge
-from vision import scan_receipt_or_food
+from vision import scan_receipt_or_food, get_image_hash
 from config import get_settings
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -234,13 +234,26 @@ def log_activity(
     category_key = TYPE_TO_CATEGORY.get(activity_type, "car_km")
     co2_kg = calculate_co2(activity_type, category_key, activity.value, activity.region)
 
+    if activity.image_hash:
+        existing = db.query(Activity).filter(Activity.image_hash == activity.image_hash).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="This exact image has already been logged. Spam detected.")
+    
+    if activity.receipt_id:
+        existing = db.query(Activity).filter(Activity.receipt_id == activity.receipt_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="This receipt has already been logged. Spam detected.")
+
     db_activity = Activity(
         user_id=user.id,
         activity_type=activity.activity_type,
         value=activity.value,
         unit=activity.unit,
         co2_kg=co2_kg,
-        description=activity.description
+        description=activity.description,
+        image_hash=activity.image_hash,
+        receipt_id=activity.receipt_id,
+        sdg_goal=activity.sdg_goal
     )
     db.add(db_activity)
 
@@ -272,12 +285,20 @@ def log_activity(
 @app.post("/api/activities/scan", tags=["Activities"])
 async def scan_activity_image(
     file: UploadFile = File(...),
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
 
     image_bytes = await file.read()
+    
+    # Check for exact duplicate before calling Gemini API (saves cost & time)
+    image_hash = get_image_hash(image_bytes)
+    existing = db.query(Activity).filter(Activity.image_hash == image_hash).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="This exact image has already been logged. Spam detected.")
+        
     result = scan_receipt_or_food(image_bytes, file.content_type)
 
     if not result:
