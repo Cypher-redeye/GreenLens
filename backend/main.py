@@ -244,6 +244,8 @@ def log_activity(
         if existing:
             raise HTTPException(status_code=400, detail="This receipt has already been logged. Spam detected.")
 
+    last_activity = db.query(Activity).filter(Activity.user_id == user.id).order_by(desc(Activity.created_at)).first()
+
     db_activity = Activity(
         user_id=user.id,
         activity_type=activity.activity_type,
@@ -259,6 +261,20 @@ def log_activity(
 
     stats = db.query(UserStats).filter(UserStats.user_id == user.id).first()
     if stats:
+        if last_activity:
+            last_date = last_activity.created_at.date()
+            if last_activity.created_at.tzinfo is not None:
+                today = datetime.now(timezone.utc).date()
+            else:
+                today = datetime.now().date()
+                
+            if last_date == today - timedelta(days=1):
+                stats.streak_days += 1
+            elif last_date < today - timedelta(days=1):
+                stats.streak_days = 1
+        else:
+            stats.streak_days = 1
+
         stats.total_co2_kg += co2_kg
         stats.weekly_co2_kg += co2_kg
         stats.xp_points += max(1, int(co2_kg * 10))
