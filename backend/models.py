@@ -38,6 +38,9 @@ class Activity(Base):
     unit = Column(String)
     co2_kg = Column(Float)
     description = Column(String, nullable=True)
+    image_hash = Column(String, unique=True, nullable=True)
+    receipt_id = Column(String, index=True, nullable=True)
+    sdg_goal = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     user = relationship("User", back_populates="activities")
