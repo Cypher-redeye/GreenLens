@@ -10,6 +10,9 @@ export const LogPage = () => {
   const [scanning, setScanning] = useState(false);
   const [success, setSuccess] = useState("");
   const [co2Preview, setCo2Preview] = useState(0);
+  const [imageHash, setImageHash] = useState(null);
+  const [receiptId, setReceiptId] = useState(null);
+  const [sdgGoal, setSdgGoal] = useState(null);
 
   const activityTypes = {
     transport: { label: "Transport", units: ["km"], factor: 0.19 },
@@ -24,6 +27,9 @@ export const LogPage = () => {
     setUnit(activityTypes[type].units[0]);
     setValue(0);
     setCo2Preview(0);
+    setImageHash(null);
+    setReceiptId(null);
+    setSdgGoal(null);
   };
 
   const handleValueChange = (newValue) => {
@@ -40,11 +46,17 @@ export const LogPage = () => {
         value,
         unit,
         description: `Logged ${activity} activity`,
-        region: localStorage.getItem("globalRegion") || "IN"
+        region: localStorage.getItem("globalRegion") || "IN",
+        image_hash: imageHash,
+        receipt_id: receiptId,
+        sdg_goal: sdgGoal,
       });
       setSuccess("Activity logged successfully! 🌱");
       setValue(0);
       setCo2Preview(0);
+      setImageHash(null);
+      setReceiptId(null);
+      setSdgGoal(null);
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       console.error("Failed to log activity:", err);
@@ -65,12 +77,19 @@ export const LogPage = () => {
         setActivity(data.activity_type);
         setUnit(data.unit || activityTypes[data.activity_type].units[0]);
         handleValueChange(data.value);
+        if (data.image_hash) setImageHash(data.image_hash);
+        if (data.receipt_id) setReceiptId(data.receipt_id);
+        if (data.sdg_goal) setSdgGoal(data.sdg_goal);
         setSuccess("AI successfully analyzed your image! ✨");
         setTimeout(() => setSuccess(""), 4000);
       }
     } catch (err) {
       console.error("Scanning failed:", err);
-      alert("Failed to analyze image. Check API key or image format.");
+      if (err.response && err.response.data && err.response.data.detail) {
+        alert(err.response.data.detail);
+      } else {
+        alert("Failed to analyze image. Check API key or image format.");
+      }
     } finally {
       setScanning(false);
     }
@@ -174,6 +193,14 @@ export const LogPage = () => {
               </div>
             </div>
           </div>
+
+          {sdgGoal && (
+            <div className="mb-8 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg text-center">
+              <span className="text-2xl block mb-2">🌍</span>
+              <p className="text-blue-200 text-sm font-semibold">Global Standard Alignment</p>
+              <p className="text-blue-100 text-lg">{sdgGoal}</p>
+            </div>
+          )}
 
           {/* Submit Button */}
           <button
