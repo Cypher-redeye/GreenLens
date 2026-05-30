@@ -33,11 +33,12 @@ Student: {user_name}
 Today's activity: {activity_type} - {co2_amount} kg CO2
 Recent activities: {activity_summary}
 
-Generate a SHORT, motivating 1-2 sentence nudge (max 60 words) to encourage sustainable habits. 
-Be specific about the activity. Make it actionable, not preachy. Use Indian context when relevant."""
+Generate a SHORT, motivating 1-2 sentence nudge (max 40 words) to encourage sustainable habits. 
+Be specific about the activity. Make it actionable, not preachy. Use Indian context when relevant.
+CRITICAL: Do NOT use any markdown formatting (no asterisks, no bold text). Output plain text only."""
         
         response = model.generate_content(prompt)
-        return response.text[:150]
+        return response.text.strip()
     except Exception as e:
         print(f"Error generating nudge: {e}")
         return get_default_nudge(activity_type, co2_amount)
