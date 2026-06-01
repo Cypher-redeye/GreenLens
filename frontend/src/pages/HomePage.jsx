@@ -25,7 +25,7 @@ const FEATURES = [
   { icon: "📸", label: "AI Receipt Scanner" },
   { icon: "🌍", label: "Global Carbon Grids" },
   { icon: "🤖", label: "Gemini AI Coach" },
-  { icon: "🏆", label: "Campus Leaderboard" },
+  { icon: "🏆", label: "Corporate Leaderboard" },
   { icon: "⚡", label: "Instant CO₂ Calc" },
   { icon: "🌲", label: "Tree Equivalents" },
   { icon: "📊", label: "Live Impact Charts" },
@@ -73,12 +73,12 @@ export const HomePage = () => {
               </span>
               .{" "}
               <br />
-              Change your{" "}
-              <span className="text-white/40">campus.</span>
+              Transform your{" "}
+              <span className="text-white/40">organization.</span>
             </h1>
 
             <p className="text-white/50 text-lg mb-10 max-w-md leading-relaxed animate-fadeUp">
-              AI-powered sustainability platform for Indian college students.
+              AI-powered sustainability platform for modern enterprises and campuses.
               Log in 60 seconds, get smarter every day.
             </p>
 
@@ -135,14 +135,14 @@ export const HomePage = () => {
 
               <div className="text-xs font-medium text-white/30 uppercase tracking-widest mb-6 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-neon-green animate-pulse" />
-                Live Campus Data · Parul University
+                Live Network Data · Global Index
               </div>
 
               <div className="space-y-6">
                 <StatRow
                   icon={<Users className="w-5 h-5" />}
                   value={studentCount.toLocaleString()}
-                  label="Students Tracking"
+                  label="Active Users Tracking"
                   color="text-neon-green"
                 />
                 <div className="divider" />
