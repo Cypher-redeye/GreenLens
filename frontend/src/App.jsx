@@ -11,6 +11,7 @@ import { LeaderboardPage } from "./pages/LeaderboardPage";
 import { CoachPage } from "./pages/CoachPage";
 import { ImpactPage } from "./pages/ImpactPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
+import { Toaster } from "sonner";
 import "./index.css";
 
 function AppContent() {
@@ -18,6 +19,7 @@ function AppContent() {
 
   return (
     <>
+      <Toaster theme="dark" position="bottom-right" richColors toastOptions={{ style: { background: 'rgba(9, 15, 12, 0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(105, 240, 174, 0.18)', color: '#E8F5EE' } }} />
       {user && <Navbar />}
       <Routes>
         <Route path="/" element={<HomePage />} />

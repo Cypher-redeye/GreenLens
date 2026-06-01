@@ -3,11 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { organizationsAPI } from "../api";
 import { Mail, Lock, User, Building } from "lucide-react";
+import { toast } from "sonner";
 
 export const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -15,12 +15,12 @@ export const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
     try {
       await login(email, password);
+      toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || "Login failed");
+      toast.error(err.response?.data?.detail || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -34,22 +34,18 @@ export const LoginPage = () => {
             Welcome Back
           </h1>
 
-          {error && (
-            <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg mb-4">
-              {error}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm mb-2 text-gray-300">Email</label>
-              <div className="flex items-center gap-2 bg-forest/50 border border-emerald-glow/30 rounded-lg px-4 py-2">
-                <Mail className="w-5 h-5 text-emerald-glow" />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="w-5 h-5 text-emerald-glow" />
+                </div>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-transparent outline-none w-full"
+                  className="glass-input pl-10"
                   required
                 />
               </div>
@@ -59,13 +55,15 @@ export const LoginPage = () => {
               <label className="block text-sm mb-2 text-gray-300">
                 Password
               </label>
-              <div className="flex items-center gap-2 bg-forest/50 border border-emerald-glow/30 rounded-lg px-4 py-2">
-                <Lock className="w-5 h-5 text-emerald-glow" />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="w-5 h-5 text-emerald-glow" />
+                </div>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-transparent outline-none w-full"
+                  className="glass-input pl-10"
                   required
                 />
               </div>
@@ -103,7 +101,6 @@ export const RegisterPage = () => {
     full_name: "",
     organization: "",
   });
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -116,7 +113,6 @@ export const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
     try {
       let orgId = null;
       if (formData.organization) {
@@ -138,9 +134,10 @@ export const RegisterPage = () => {
       };
 
       await register(payload);
+      toast.success("Registration successful!");
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message || err.response?.data?.detail || "Registration failed");
+      toast.error(err.message || err.response?.data?.detail || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -153,12 +150,6 @@ export const RegisterPage = () => {
           <h1 className="text-3xl font-bold glow-text mb-6 text-center">
             Join GreenLens
           </h1>
-
-          {error && (
-            <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg mb-4">
-              {error}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <FormField
@@ -231,10 +222,12 @@ export const RegisterPage = () => {
 const FormField = ({ icon: Icon, label, ...props }) => (
   <div>
     <label className="block text-sm mb-2 text-gray-300">{label}</label>
-    <div className="flex items-center gap-2 bg-forest/50 border border-emerald-glow/30 rounded-lg px-4 py-2">
-      <Icon className="w-5 h-5 text-emerald-glow" />
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Icon className="w-5 h-5 text-emerald-glow" />
+      </div>
       <input
-        className="bg-transparent outline-none w-full"
+        className="glass-input pl-10"
         {...props}
       />
     </div>

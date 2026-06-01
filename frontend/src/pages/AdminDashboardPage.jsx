@@ -125,14 +125,21 @@ export const AdminDashboardPage = () => {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="name" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
+                <defs>
+                  <linearGradient id="colorCo2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#5EFFA0" stopOpacity={0.9}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.3}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                <XAxis dataKey="name" stroke="#9ca3af" axisLine={false} tickLine={false} dy={10} />
+                <YAxis stroke="#9ca3af" axisLine={false} tickLine={false} dx={-10} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #059669', borderRadius: '8px' }}
-                  itemStyle={{ color: '#10b981' }}
+                  contentStyle={{ backgroundColor: 'rgba(15, 26, 18, 0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(105, 240, 174, 0.2)', borderRadius: '12px' }}
+                  itemStyle={{ color: '#5EFFA0', fontWeight: 'bold' }}
+                  cursor={{ fill: 'rgba(105, 240, 174, 0.05)' }}
                 />
-                <Bar dataKey="co2" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="co2" fill="url(#colorCo2)" radius={[6, 6, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
