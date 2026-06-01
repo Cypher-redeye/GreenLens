@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Leaf, LogOut, LayoutDashboard, PenLine, Trophy, Brain, Globe2 } from "lucide-react";
+import { Leaf, LogOut, LayoutDashboard, PenLine, Trophy, Brain, Globe2, Building } from "lucide-react";
 import { useAuth } from "../AuthContext";
 
 const NAV_ITEMS = [
@@ -13,6 +13,10 @@ const NAV_ITEMS = [
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
+  
+  const navItems = user?.role === "admin" 
+    ? [...NAV_ITEMS, { to: "/admin", label: "Admin", icon: Building }]
+    : NAV_ITEMS;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -58,7 +62,7 @@ export const Navbar = () => {
         {/* Nav Links */}
         {user && (
           <div className="flex items-center gap-1">
-            {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+            {navItems.map(({ to, label, icon: Icon }) => {
               const active = location.pathname === to;
               return (
                 <Link

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import { organizationsAPI } from "../api";
 import { Mail, Lock, User, Building } from "lucide-react";
 
 export const LoginPage = () => {
@@ -100,7 +101,7 @@ export const RegisterPage = () => {
     username: "",
     password: "",
     full_name: "",
-    campus: "Parul University",
+    organization: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -117,10 +118,29 @@ export const RegisterPage = () => {
     setLoading(true);
     setError("");
     try {
-      await register(formData);
+      let orgId = null;
+      if (formData.organization) {
+        try {
+          const orgRes = await organizationsAPI.create(formData.organization);
+          orgId = orgRes.data.id;
+        } catch (orgErr) {
+          throw new Error(orgErr.response?.data?.detail || "Organization creation failed. Please try a different name.");
+        }
+      }
+
+      const payload = {
+        email: formData.email,
+        username: formData.username,
+        password: formData.password,
+        full_name: formData.full_name,
+        campus: formData.organization || "General",
+        org_id: orgId
+      };
+
+      await register(payload);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || "Registration failed");
+      setError(err.message || err.response?.data?.detail || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -174,18 +194,15 @@ export const RegisterPage = () => {
               onChange={handleChange}
             />
 
-            <div>
-              <label className="block text-sm mb-2 text-gray-300">Campus</label>
-              <select
-                name="campus"
-                value={formData.campus}
-                onChange={handleChange}
-                className="w-full bg-forest/50 border border-emerald-glow/30 rounded-lg px-4 py-2 text-white"
-              >
-                <option>Parul University</option>
-                <option>Other Campus</option>
-              </select>
-            </div>
+            <FormField
+              icon={Building}
+              label="Company / Organization Name (Optional)"
+              type="text"
+              name="organization"
+              value={formData.organization}
+              onChange={handleChange}
+              required={false}
+            />
 
             <button
               type="submit"
@@ -219,7 +236,6 @@ const FormField = ({ icon: Icon, label, ...props }) => (
       <input
         className="bg-transparent outline-none w-full"
         {...props}
-        required
       />
     </div>
   </div>

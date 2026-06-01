@@ -58,4 +58,10 @@ export const userAPI = {
   getProfile: () => api.get("/api/user/profile"),
 };
 
+export const organizationsAPI = {
+  create: (name) => api.post("/api/organizations", { name }),
+  getStats: (orgId) => api.get(`/api/organizations/${orgId}/stats`),
+  getExportUrl: (orgId) => `${API_URL}/api/organizations/${orgId}/export`
+};
+
 export default api;

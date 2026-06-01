@@ -10,6 +10,7 @@ import { LogPage } from "./pages/LogPage";
 import { LeaderboardPage } from "./pages/LeaderboardPage";
 import { CoachPage } from "./pages/CoachPage";
 import { ImpactPage } from "./pages/ImpactPage";
+import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import "./index.css";
 
 function AppContent() {
@@ -65,6 +66,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <ImpactPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminDashboardPage />
             </ProtectedRoute>
           }
         />
