@@ -1,13 +1,14 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from datetime import datetime
 
 class UserRegister(BaseModel):
     email: EmailStr
-    username: str
-    password: str
+    username: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
     full_name: str
     campus: str = "Parul University"
+    org_id: Optional[int] = None
 
 class UserLogin(BaseModel):
     email: str
@@ -26,6 +27,21 @@ class UserBase(BaseModel):
     campus: str
 
 class UserResponse(UserBase):
+    id: int
+    created_at: datetime
+    role: str
+    org_id: Optional[int]
+    
+    class Config:
+        from_attributes = True
+
+class OrganizationBase(BaseModel):
+    name: str
+
+class OrganizationCreate(OrganizationBase):
+    pass
+
+class OrganizationResponse(OrganizationBase):
     id: int
     created_at: datetime
     

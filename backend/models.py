@@ -12,6 +12,15 @@ class ActivityType(str, enum.Enum):
     PURCHASES = "purchases"
     WASTE = "waste"
 
+class Organization(Base):
+    __tablename__ = "organizations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    users = relationship("User", back_populates="organization")
+
 class User(Base):
     __tablename__ = "users"
     
@@ -21,8 +30,12 @@ class User(Base):
     hashed_password = Column(String)
     full_name = Column(String, nullable=True)
     campus = Column(String, default="Parul University")
+    role = Column(String, default="employee") # admin, employee
+    org_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    organization = relationship("Organization", back_populates="users")
     
     activities = relationship("Activity", back_populates="user", cascade="all, delete-orphan")
     stats = relationship("UserStats", back_populates="user", uselist=False, cascade="all, delete-orphan")

@@ -1,9 +1,11 @@
 import time
 import logging
+import csv
+import io
 from functools import lru_cache as ttl_cache
 
 from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, BackgroundTasks, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -12,13 +14,16 @@ from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 import bcrypt
 import imagehash
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from database import engine, get_db, Base
-from models import User, Activity, UserStats, Leaderboard, Nudge
+from models import User, Activity, UserStats, Leaderboard, Nudge, Organization
 from schemas import (
     UserRegister, UserLogin, Token, UserResponse, ActivityCreate,
     ActivityResponse, UserStatsResponse, LeaderboardEntry, NudgeResponse,
-    DashboardResponse
+    DashboardResponse, OrganizationCreate, OrganizationResponse
 )
 from emission_factors import calculate_co2, get_trees_equivalent
 from gemini_nudges import generate_nudge
@@ -40,6 +45,11 @@ app = FastAPI(
     version="2.0.0",
     description="Track Your Carbon. Change Your Campus. 🌿",
 )
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 settings = get_settings()
 security = HTTPBearer()
 
@@ -141,6 +151,11 @@ def get_current_user(
         raise exc
     return user
 
+def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    return current_user
+
 def is_image_duplicate(db: Session, new_hash_str: str) -> bool:
     if not new_hash_str:
         return False
@@ -224,7 +239,9 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
         username=user_data.username,
         full_name=user_data.full_name,
         hashed_password=hashed,
-        campus=user_data.campus
+        campus=user_data.campus,
+        org_id=user_data.org_id,
+        role="admin" if user_data.org_id and db.query(User).filter(User.org_id == user_data.org_id).count() == 0 else "employee"
     )
     db.add(db_user)
     db.commit()
@@ -235,6 +252,52 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
 
     token = create_access_token(data={"sub": db_user.id})
     return {"access_token": token, "token_type": "bearer", "user_id": db_user.id, "username": db_user.username}
+
+@app.post("/api/organizations", response_model=OrganizationResponse, tags=["Organizations"])
+def create_organization(org_data: OrganizationCreate, db: Session = Depends(get_db)):
+    existing = db.query(Organization).filter(Organization.name == org_data.name).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Organization already exists")
+    db_org = Organization(name=org_data.name)
+    db.add(db_org)
+    db.commit()
+    db.refresh(db_org)
+    return db_org
+
+@app.get("/api/organizations/{org_id}/stats", tags=["Organizations"])
+def get_org_stats(org_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
+    if admin.org_id != org_id:
+        raise HTTPException(status_code=403, detail="Not authorized for this organization")
+    total_co2 = db.query(func.sum(UserStats.total_co2_kg)).join(User).filter(User.org_id == org_id).scalar() or 0
+    employee_count = db.query(func.count(User.id)).filter(User.org_id == org_id).scalar() or 0
+    return {"org_id": org_id, "total_co2_saved": total_co2, "employee_count": employee_count}
+
+@app.get("/api/organizations/{org_id}/export", tags=["Organizations"])
+def export_org_activities(org_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
+    if admin.org_id != org_id:
+        raise HTTPException(status_code=403, detail="Not authorized for this organization")
+        
+    activities = db.query(Activity, User.username).join(User, Activity.user_id == User.id).filter(User.org_id == org_id).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Activity ID", "Username", "Type", "Value", "Unit", "CO2 Saved (kg)", "Date", "Description"])
+    
+    for activity, username in activities:
+        writer.writerow([
+            activity.id,
+            username,
+            activity.activity_type,
+            activity.value,
+            activity.unit,
+            round(activity.co2_kg, 2),
+            activity.created_at.strftime("%Y-%m-%d %H:%M:%S") if activity.created_at else "",
+            activity.description or ""
+        ])
+        
+    response = Response(content=output.getvalue(), media_type="text/csv")
+    response.headers["Content-Disposition"] = f"attachment; filename=greenlens_org_{org_id}_report.csv"
+    return response
 
 @app.post("/api/auth/login", response_model=Token, tags=["Auth"])
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
@@ -259,6 +322,9 @@ def log_activity(
     activity_type = activity.activity_type.lower()
     category_key = TYPE_TO_CATEGORY.get(activity_type, "car_km")
     co2_kg = calculate_co2(activity_type, category_key, activity.value, activity.region)
+    
+    if co2_kg > 1000:
+        raise HTTPException(status_code=400, detail="CO2 value exceeds reasonable limits. Cheat prevention active.")
 
     if activity.image_hash and is_image_duplicate(db, activity.image_hash):
         raise HTTPException(status_code=400, detail="This exact image has already been logged. Spam detected.")
@@ -323,7 +389,9 @@ def log_activity(
     return db_activity
 
 @app.post("/api/activities/scan", tags=["Activities"])
+@limiter.limit("5/minute")
 async def scan_activity_image(
+    request: Request,
     file: UploadFile = File(...),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -332,6 +400,8 @@ async def scan_activity_image(
         raise HTTPException(status_code=400, detail="File must be an image")
 
     image_bytes = await file.read()
+    if len(image_bytes) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 5MB.")
     
     # Check for visual duplicate before calling Gemini API (saves cost & time)
     image_hash = get_image_hash(image_bytes)
