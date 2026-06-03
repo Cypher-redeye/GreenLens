@@ -17,6 +17,7 @@ class Organization(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    invite_code = Column(String, unique=True, index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     users = relationship("User", back_populates="organization")
@@ -29,7 +30,7 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     full_name = Column(String, nullable=True)
-    campus = Column(String, default="Parul University")
+    campus = Column(String, default="")
     role = Column(String, default="employee") # admin, employee
     org_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -73,19 +74,7 @@ class UserStats(Base):
     
     user = relationship("User", back_populates="stats")
 
-class Leaderboard(Base):
-    __tablename__ = "leaderboard"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
-    rank = Column(Integer, index=True)
-    xp_points = Column(Integer)
-    weekly_co2_reduction = Column(Float)
-    streak = Column(Integer)
-    username = Column(String)
-    campus = Column(String)
-    badge = Column(String, nullable=True)
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
 
 class Nudge(Base):
     __tablename__ = "nudges"

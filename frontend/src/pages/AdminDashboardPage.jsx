@@ -35,6 +35,22 @@ export const AdminDashboardPage = () => {
     fetchStats();
   }, [user]);
 
+  const handleExport = async (format) => {
+    try {
+      const res = await organizationsAPI.exportData(user.org_id, format);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `greenlens_org_${user.org_id}_report.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error(err);
+      setError(`Failed to export ${format.toUpperCase()} report.`);
+    }
+  };
+
   // Protect route
   if (!user || user.role !== "admin") {
     return <Navigate to="/dashboard" />;
@@ -42,10 +58,8 @@ export const AdminDashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-forest flex items-center justify-center pt-20">
-        <div className="animate-spin text-emerald-glow">
-          <Leaf className="w-8 h-8" />
-        </div>
+      <div className="min-h-screen pt-32 flex flex-col items-center justify-center bg-[var(--bg-paper)]">
+        <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-ink)] animate-pulse">Loading Admin Panel...</div>
       </div>
     );
   }
@@ -59,91 +73,110 @@ export const AdminDashboardPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-forest pt-24 px-4 pb-12">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="min-h-screen bg-[var(--bg-paper)] pt-20 px-8 md:px-24">
+      <div className="max-w-[100rem] mx-auto animate-fadeUp border-x border-[var(--border-fine)] min-h-[calc(100vh-80px)] flex flex-col">
+        
+        {/* Header Section */}
+        <div className="p-12 border-b border-[var(--border-thick)] flex flex-col md:flex-row justify-between items-start md:items-end gap-8 bg-[var(--bg-surface)]">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
-              <Building className="text-emerald-glow" />
-              Corporate Dashboard
-            </h1>
-            <p className="text-gray-400">
-              Manage your organization's sustainability metrics.
+            <p className="font-mono-num text-[var(--text-muted)] text-sm tracking-widest uppercase mb-4">
+              ORG.ID // CORPORATE
             </p>
+            <h1 className="text-5xl md:text-7xl font-display font-black tracking-tight leading-none">
+              Admin.
+            </h1>
           </div>
-          <a
-            href={organizationsAPI.getExportUrl(user.org_id)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary flex items-center justify-center gap-2 px-6"
-          >
-            <Download className="w-5 h-5" />
-            Export CSV Report
-          </a>
+          <div className="flex gap-4">
+            <button
+              onClick={() => handleExport('csv')}
+              className="btn-primary"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
+            <button
+              onClick={() => handleExport('pdf')}
+              className="btn-secondary"
+            >
+              <Download className="w-4 h-4" />
+              Export PDF
+            </button>
+          </div>
         </div>
 
         {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg">
+          <div className="p-6 bg-red-100 text-red-800 border-b border-[var(--border-thick)] font-mono-num text-sm font-bold uppercase tracking-widest">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="card text-center relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 text-emerald-glow/10 group-hover:text-emerald-glow/20 transition-colors">
-              <Leaf className="w-32 h-32" />
-            </div>
-            <h3 className="text-gray-400 mb-2 relative z-10">Total CO₂ Saved</h3>
-            <div className="text-4xl font-bold text-white relative z-10">
-              {stats?.total_co2_saved?.toFixed(1) || "0.0"} <span className="text-xl text-gray-500">kg</span>
-            </div>
-          </div>
-
-          <div className="card text-center relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 text-emerald-glow/10 group-hover:text-emerald-glow/20 transition-colors">
-              <Users className="w-32 h-32" />
-            </div>
-            <h3 className="text-gray-400 mb-2 relative z-10">Active Employees</h3>
-            <div className="text-4xl font-bold text-white relative z-10">
-              {stats?.employee_count || 0}
-            </div>
-          </div>
+        {/* Swiss Grid KPIs */}
+        <div className="grid grid-cols-1 md:grid-cols-4 border-b border-[var(--border-thick)]">
           
-          <div className="card text-center relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 text-emerald-glow/10 group-hover:text-emerald-glow/20 transition-colors">
-              <TrendingUp className="w-32 h-32" />
+          {/* Main KPI */}
+          <div className="col-span-1 md:col-span-2 p-12 border-b md:border-b-0 md:border-r border-[var(--border-fine)] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-8">
+              <span className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">Total CO₂ Saved</span>
+              <Leaf className="w-5 h-5 text-[var(--text-ink)]" />
             </div>
-            <h3 className="text-gray-400 mb-2 relative z-10">Equivalent Trees</h3>
-            <div className="text-4xl font-bold text-white relative z-10">
-              {Math.floor((stats?.total_co2_saved || 0) / 21)}
+            <div>
+              <div className="font-mono-num text-7xl md:text-9xl font-bold tracking-tighter leading-none mb-2">
+                {stats?.total_co2_saved?.toFixed(1) || "0.0"}
+              </div>
+              <div className="text-sm font-bold uppercase tracking-widest text-[var(--text-ink)]">Kilograms of CO₂</div>
+            </div>
+          </div>
+
+          {/* Sub KPIs */}
+          <div className="col-span-1 md:col-span-1 border-b md:border-b-0 md:border-r border-[var(--border-fine)] grid grid-rows-2">
+            <div className="p-8 border-b border-[var(--border-fine)] flex flex-col justify-between bg-[var(--accent)]">
+              <span className="text-xs font-bold uppercase tracking-widest text-[var(--text-ink)]">Active Employees</span>
+              <div className="font-mono-num text-5xl font-bold mt-4">{stats?.employee_count || 0}</div>
+            </div>
+            <div className="p-8 flex flex-col justify-between bg-[#FF4D00] text-[#F7F5F0]">
+              <span className="text-xs font-bold uppercase tracking-widest opacity-80">Equivalent Trees</span>
+              <div className="font-mono-num text-5xl font-bold mt-4">{Math.floor((stats?.total_co2_saved || 0) / 21)}</div>
+            </div>
+          </div>
+
+          <div className="col-span-1 md:col-span-1 p-8 flex flex-col justify-center items-center bg-[var(--bg-surface)] text-center">
+             <Building className="w-10 h-10 text-[var(--text-muted)] mb-4" />
+             <div className="text-sm font-bold uppercase tracking-widest text-[var(--text-ink)]">Corporate Overview</div>
+             {stats?.invite_code && (
+               <div className="mt-6 p-4 border border-[var(--border-thick)] bg-[var(--bg-paper)] w-full">
+                 <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Employee Invite Code</div>
+                 <div className="font-mono-num text-2xl font-bold tracking-widest text-[var(--accent)]">{stats.invite_code}</div>
+               </div>
+             )}
+          </div>
+
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 border-b border-[var(--border-thick)] bg-[var(--bg-surface)] flex-1">
+          <div className="p-12 flex flex-col">
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-2xl font-bold uppercase tracking-wide">Emissions Offset Over Time</h2>
+              <span className="pill">Current</span>
+            </div>
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} barSize={60}>
+                  <CartesianGrid stroke="var(--border-fine)" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" stroke="var(--text-ink)" tick={{ fontSize: 10, fontFamily: 'Inter', fontWeight: 600 }} axisLine={false} tickLine={false} dy={10} />
+                  <YAxis stroke="var(--text-ink)" tick={{ fontSize: 10, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} dx={-10} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'var(--text-ink)', color: 'var(--bg-paper)', borderRadius: '0', border: '1px solid var(--border-thick)' }}
+                    itemStyle={{ color: 'var(--accent)', fontWeight: 'bold' }}
+                    cursor={{ fill: "rgba(11,18,14,0.03)" }}
+                  />
+                  <Bar dataKey="co2" fill="var(--text-ink)" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
 
-        <div className="card mt-8">
-          <h2 className="text-xl font-semibold text-white mb-6">Emissions Offset Over Time</h2>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorCo2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#5EFFA0" stopOpacity={0.9}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.3}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                <XAxis dataKey="name" stroke="#9ca3af" axisLine={false} tickLine={false} dy={10} />
-                <YAxis stroke="#9ca3af" axisLine={false} tickLine={false} dx={-10} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'rgba(15, 26, 18, 0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(105, 240, 174, 0.2)', borderRadius: '12px' }}
-                  itemStyle={{ color: '#5EFFA0', fontWeight: 'bold' }}
-                  cursor={{ fill: 'rgba(105, 240, 174, 0.05)' }}
-                />
-                <Bar dataKey="co2" fill="url(#colorCo2)" radius={[6, 6, 0, 0]} barSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </div>
     </div>
   );

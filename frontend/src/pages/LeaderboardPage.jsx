@@ -23,65 +23,76 @@ export const LeaderboardPage = () => {
 
   if (loading) {
     return (
-      <div className="pt-32 text-center text-emerald-glow">
-        Loading leaderboard...
+      <div className="min-h-screen pt-32 flex flex-col items-center justify-center bg-[var(--bg-paper)]">
+        <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-ink)] animate-pulse">Loading Ranks...</div>
       </div>
     );
   }
 
   return (
-    <div className="pt-24 min-h-screen bg-deep px-4 pb-10">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="heading-xl text-neon-green mb-2 flex items-center gap-3">
-          <Trophy className="w-10 h-10" /> Campus Eco Warriors
-        </h1>
-        <p className="text-white/40 mb-8 max-w-2xl">Ranked by XP earned from reducing your carbon footprint</p>
+    <div className="min-h-screen bg-[var(--bg-paper)] pt-20 px-8 md:px-24">
+      <div className="max-w-[100rem] mx-auto animate-fadeUp border-x border-[var(--border-fine)] min-h-[calc(100vh-80px)]">
+        
+        {/* Header Section */}
+        <div className="p-12 border-b border-[var(--border-thick)] bg-[var(--bg-surface)]">
+          <p className="font-mono-num text-[var(--text-muted)] text-sm tracking-widest uppercase mb-4">
+            GLOBAL.GRID // LEADERBOARD
+          </p>
+          <h1 className="text-5xl md:text-7xl font-display font-black tracking-tight leading-none mb-4">
+            Eco Warriors.
+          </h1>
+          <p className="text-[var(--text-muted)] text-xl font-medium max-w-2xl">
+            Ranked by XP earned from reducing their carbon footprint.
+          </p>
+        </div>
 
-        {leaderboard.length === 0 ? (
-          <div className="card glass-mid text-center py-16">
-            <Trophy className="w-16 h-16 mx-auto mb-4 opacity-30" />
-            <p className="text-lg font-bold mb-2 text-neon-green">No entries yet!</p>
-            <p className="text-sm text-white/40">
-              Be the first on the leaderboard.
-              <Link to="/log" className="text-neon-green underline ml-1">Log an activity</Link>
-              to earn XP.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {leaderboard.map((entry) => (
-              <div
-                key={entry.rank}
-                className={`card glass-mid flex items-center justify-between p-4 ${
-                  entry.rank <= 3 ? "glow-border" : ""
-                }`}
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="text-3xl font-bold text-neon-green w-12 text-center">
-                    {entry.rank}
-                  </div>
-                  <div>
-                    <div className="font-bold text-lg text-white/80">{entry.username}</div>
-                    <div className="text-xs text-white/30">
-                      🔥 Streak: {entry.streak ?? 0} days
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-neon-green flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5" /> {entry.xp_points}
-                  </div>
-                  <div className="text-xs text-white/30">
-                    {(entry.weekly_co2_reduction ?? 0).toFixed(1)} kg CO₂
-                  </div>
-                </div>
-                {entry.badge && (
-                  <div className="text-2xl ml-4">{entry.badge.split(" ")[0]}</div>
-                )}
+        {/* Leaderboard Grid */}
+        <div className="bg-[var(--bg-paper)]">
+          {leaderboard.length === 0 ? (
+            <div className="p-24 text-center">
+              <p className="text-lg font-bold mb-2 text-[var(--text-ink)]">No entries yet.</p>
+              <Link to="/log" className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] border-b border-[var(--text-ink)] hover:text-[var(--text-ink)] transition-colors">
+                Log an activity to be the first.
+              </Link>
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 p-8 border-b border-[var(--border-thick)] bg-[var(--text-ink)] text-[var(--bg-paper)] text-xs font-bold uppercase tracking-widest">
+                <div className="col-span-2 md:col-span-1 text-center">Rank</div>
+                <div className="col-span-5 md:col-span-4">User</div>
+                <div className="col-span-3 text-right">XP</div>
+                <div className="col-span-2 md:col-span-4 text-right hidden md:block">Reduction (kg CO₂)</div>
               </div>
-            ))}
-          </div>
-        )}
+
+              {/* Rows */}
+              {leaderboard.map((entry) => (
+                <div
+                  key={entry.rank}
+                  className={`grid grid-cols-12 gap-4 p-8 border-b border-[var(--border-fine)] items-center transition-colors hover:bg-[var(--bg-surface)] ${
+                    entry.rank === 1 ? "bg-[var(--accent)] hover:bg-[var(--accent)]" : ""
+                  }`}
+                >
+                  <div className="col-span-2 md:col-span-1 text-center">
+                    <span className="font-mono-num text-3xl font-bold">{entry.rank}</span>
+                  </div>
+                  <div className="col-span-5 md:col-span-4 flex flex-col">
+                    <span className="font-bold text-xl">{entry.username}</span>
+                    <span className="text-xs font-bold uppercase tracking-widest opacity-60 flex items-center gap-2 mt-1">
+                      Streak: {entry.streak ?? 0} {entry.badge && `— ${entry.badge.split(" ")[0]}`}
+                    </span>
+                  </div>
+                  <div className="col-span-5 md:col-span-3 text-right">
+                    <span className="font-mono-num text-2xl font-bold">{entry.xp_points}</span>
+                  </div>
+                  <div className="col-span-4 text-right hidden md:block">
+                    <span className="font-mono-num text-lg opacity-80">{(entry.weekly_co2_reduction ?? 0).toFixed(1)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

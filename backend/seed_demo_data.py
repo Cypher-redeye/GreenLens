@@ -12,6 +12,10 @@ from models import User, Activity, UserStats, Organization
 from main import get_password_hash
 
 def seed_data():
+    # Ensure tables are fresh
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    
     db: Session = SessionLocal()
     try:
         print("🌱 Seeding Demo Data for Hackathon Pitch...")

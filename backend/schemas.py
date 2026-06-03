@@ -7,8 +7,9 @@ class UserRegister(BaseModel):
     username: str = Field(..., min_length=3)
     password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
     full_name: str
-    campus: str = "Parul University"
+    campus: str = ""
     org_id: Optional[int] = None
+    role: str = "employee"
 
 class UserLogin(BaseModel):
     email: str
@@ -29,8 +30,8 @@ class UserBase(BaseModel):
 class UserResponse(UserBase):
     id: int
     created_at: datetime
-    role: str
-    org_id: Optional[int]
+    role: Optional[str] = "employee"
+    org_id: Optional[int] = None
     
     class Config:
         from_attributes = True
@@ -44,6 +45,7 @@ class OrganizationCreate(OrganizationBase):
 class OrganizationResponse(OrganizationBase):
     id: int
     created_at: datetime
+    invite_code: Optional[str] = None
     
     class Config:
         from_attributes = True

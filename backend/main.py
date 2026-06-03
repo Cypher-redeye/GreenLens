@@ -19,7 +19,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from database import engine, get_db, Base
-from models import User, Activity, UserStats, Leaderboard, Nudge, Organization
+from models import User, Activity, UserStats, Nudge, Organization
 from schemas import (
     UserRegister, UserLogin, Token, UserResponse, ActivityCreate,
     ActivityResponse, UserStatsResponse, LeaderboardEntry, NudgeResponse,
@@ -151,6 +151,23 @@ def get_current_user(
         raise exc
     return user
 
+security_optional = HTTPBearer(auto_error=False)
+
+def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials = Depends(security_optional),
+    db: Session = Depends(get_db)
+) -> User | None:
+    if not credentials:
+        return None
+    try:
+        payload = jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+    except JWTError:
+        return None
+    return db.query(User).filter(User.id == int(user_id)).first()
+
 def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin privileges required")
@@ -226,7 +243,8 @@ def read_root():
     }
 
 @app.post("/api/auth/register", response_model=Token, tags=["Auth"])
-def register(user_data: UserRegister, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, user_data: UserRegister, db: Session = Depends(get_db)):
     existing = db.query(User).filter(
         (User.email == user_data.email) | (User.username == user_data.username)
     ).first()
@@ -241,7 +259,7 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
         hashed_password=hashed,
         campus=user_data.campus,
         org_id=user_data.org_id,
-        role="admin" if user_data.org_id and db.query(User).filter(User.org_id == user_data.org_id).count() == 0 else "employee"
+        role=user_data.role
     )
     db.add(db_user)
     db.commit()
@@ -253,12 +271,24 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
     token = create_access_token(data={"sub": db_user.id})
     return {"access_token": token, "token_type": "bearer", "user_id": db_user.id, "username": db_user.username}
 
+import string
+import random
+
+def generate_invite_code(db: Session, length=6) -> str:
+    characters = string.ascii_uppercase + string.digits
+    while True:
+        code = ''.join(random.choices(characters, k=length))
+        if not db.query(Organization).filter(Organization.invite_code == code).first():
+            return code
+
 @app.post("/api/organizations", response_model=OrganizationResponse, tags=["Organizations"])
-def create_organization(org_data: OrganizationCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def create_organization(request: Request, org_data: OrganizationCreate, db: Session = Depends(get_db)):
     existing = db.query(Organization).filter(Organization.name == org_data.name).first()
     if existing:
         raise HTTPException(status_code=400, detail="Organization already exists")
-    db_org = Organization(name=org_data.name)
+    invite_code = generate_invite_code(db)
+    db_org = Organization(name=org_data.name, invite_code=invite_code)
     db.add(db_org)
     db.commit()
     db.refresh(db_org)
@@ -268,17 +298,58 @@ def create_organization(org_data: OrganizationCreate, db: Session = Depends(get_
 def get_org_stats(org_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
     if admin.org_id != org_id:
         raise HTTPException(status_code=403, detail="Not authorized for this organization")
+    org = db.query(Organization).filter(Organization.id == org_id).first()
     total_co2 = db.query(func.sum(UserStats.total_co2_kg)).join(User).filter(User.org_id == org_id).scalar() or 0
     employee_count = db.query(func.count(User.id)).filter(User.org_id == org_id).scalar() or 0
-    return {"org_id": org_id, "total_co2_saved": total_co2, "employee_count": employee_count}
+    return {"org_id": org_id, "total_co2_saved": total_co2, "employee_count": employee_count, "invite_code": org.invite_code if org else None}
+
+@app.get("/api/organizations/invite/{invite_code}", response_model=OrganizationResponse, tags=["Organizations"])
+def get_organization_by_invite(invite_code: str, db: Session = Depends(get_db)):
+    org = db.query(Organization).filter(Organization.invite_code == invite_code.upper()).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Invalid invite code")
+    return org
 
 @app.get("/api/organizations/{org_id}/export", tags=["Organizations"])
-def export_org_activities(org_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
+def export_org_activities(org_id: int, format: str = "csv", db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
     if admin.org_id != org_id:
         raise HTTPException(status_code=403, detail="Not authorized for this organization")
         
     activities = db.query(Activity, User.username).join(User, Activity.user_id == User.id).filter(User.org_id == org_id).all()
     
+    if format.lower() == "pdf":
+        from fpdf import FPDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("helvetica", "B", 16)
+        pdf.cell(0, 10, f"GreenLens Organization {org_id} Report", ln=True, align="C")
+        pdf.ln(10)
+        
+        pdf.set_font("helvetica", "B", 10)
+        headers = ["ID", "User", "Type", "Value", "Unit", "CO2 (kg)", "Date"]
+        col_widths = [15, 30, 25, 20, 20, 25, 45]
+        
+        for i, header in enumerate(headers):
+            pdf.cell(col_widths[i], 10, header, border=1)
+        pdf.ln()
+        
+        pdf.set_font("helvetica", "", 10)
+        for activity, username in activities:
+            date_str = activity.created_at.strftime("%Y-%m-%d %H:%M") if activity.created_at else ""
+            pdf.cell(col_widths[0], 10, str(activity.id), border=1)
+            pdf.cell(col_widths[1], 10, username[:15], border=1)
+            pdf.cell(col_widths[2], 10, activity.activity_type[:12], border=1)
+            pdf.cell(col_widths[3], 10, f"{activity.value:.2f}", border=1)
+            pdf.cell(col_widths[4], 10, activity.unit[:10], border=1)
+            pdf.cell(col_widths[5], 10, f"{activity.co2_kg:.2f}", border=1)
+            pdf.cell(col_widths[6], 10, date_str, border=1)
+            pdf.ln()
+            
+        pdf_bytes = pdf.output()
+        response = Response(content=bytes(pdf_bytes), media_type="application/pdf")
+        response.headers["Content-Disposition"] = f"attachment; filename=greenlens_org_{org_id}_report.pdf"
+        return response
+        
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["Activity ID", "Username", "Type", "Value", "Unit", "CO2 Saved (kg)", "Date", "Description"])
@@ -300,7 +371,8 @@ def export_org_activities(org_id: int, db: Session = Depends(get_db), admin: Use
     return response
 
 @app.post("/api/auth/login", response_model=Token, tags=["Auth"])
-def login(user_data: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, user_data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_data.email).first()
     if not user or not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -313,7 +385,9 @@ def get_profile(user: User = Depends(get_current_user)):
     return user
 
 @app.post("/api/activities", response_model=ActivityResponse, tags=["Activities"])
+@limiter.limit("30/minute")
 def log_activity(
+    request: Request,
     activity: ActivityCreate,
     background_tasks: BackgroundTasks,          # ← Phase 1: inject background tasks
     user: User = Depends(get_current_user),
@@ -383,7 +457,7 @@ def log_activity(
     )
 
     # Invalidate leaderboard & campus caches since XP changed
-    invalidate_cache("leaderboard", "campus_stats")
+    invalidate_cache(f"leaderboard_{user.org_id}", f"campus_stats_{user.org_id}", "campus_stats_global")
 
     logger.info("✅ Activity logged: %s %.2f kg CO₂ (user=%s)", activity_type, co2_kg, user.username)
     return db_activity
@@ -423,8 +497,11 @@ async def scan_activity_image(
 def get_activities(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    limit: int = 10
+    limit: int = 10,
+    org_wide: bool = False
 ):
+    if org_wide:
+        return db.query(Activity).join(User).filter(User.org_id == user.org_id).order_by(desc(Activity.created_at)).limit(limit).all()
     return db.query(Activity).filter(Activity.user_id == user.id).order_by(desc(Activity.created_at)).limit(limit).all()
 
 @app.get("/api/stats", response_model=UserStatsResponse, tags=["Stats"])
@@ -450,9 +527,10 @@ def get_dashboard(
     return {"user": user, "stats": stats, "recent_activities": activities, "today_co2": today_co2}
 
 @app.get("/api/leaderboard", response_model=list[LeaderboardEntry], tags=["Social"])
-def get_leaderboard(db: Session = Depends(get_db), limit: int = 50):
+def get_leaderboard(db: Session = Depends(get_db), limit: int = 50, user: User = Depends(get_current_user)):
     # Phase 2: Return cached result if fresh (30s TTL)
-    cached = get_cached("leaderboard", ttl_seconds=30)
+    cache_key = f"leaderboard_{user.org_id}"
+    cached = get_cached(cache_key, ttl_seconds=30)
     if cached:
         logger.info("⚡ Leaderboard served from cache")
         return cached
@@ -460,7 +538,7 @@ def get_leaderboard(db: Session = Depends(get_db), limit: int = 50):
     rows = db.query(
         User.username, UserStats.xp_points, UserStats.weekly_co2_kg,
         UserStats.streak_days, User.campus
-    ).join(UserStats, User.id == UserStats.user_id).order_by(desc(UserStats.xp_points)).limit(limit).all()
+    ).join(UserStats, User.id == UserStats.user_id).filter(User.org_id == user.org_id).order_by(desc(UserStats.xp_points)).limit(limit).all()
 
     result = []
     for idx, (username, xp, weekly_co2, streak, campus) in enumerate(rows, 1):
@@ -474,7 +552,7 @@ def get_leaderboard(db: Session = Depends(get_db), limit: int = 50):
             "badge": badge
         })
 
-    set_cached("leaderboard", result)
+    set_cached(cache_key, result)
     return result
 
 @app.get("/api/nudges", response_model=list[NudgeResponse], tags=["AI"])
@@ -499,23 +577,32 @@ def mark_nudge_read(
     return {"message": "Nudge marked as read"}
 
 @app.get("/api/campus-stats", tags=["Social"])
-def get_campus_stats(db: Session = Depends(get_db)):
+def get_campus_stats(db: Session = Depends(get_db), user: User = Depends(get_current_user_optional)):
     # Phase 2: Cache campus stats for 30 seconds
-    cached = get_cached("campus_stats", ttl_seconds=30)
+    org_id = user.org_id if user else None
+    cache_key = f"campus_stats_{org_id}" if org_id else "campus_stats_global"
+    cached = get_cached(cache_key, ttl_seconds=30)
     if cached:
         logger.info("⚡ Campus stats served from cache")
         return cached
 
-    total_users = db.query(func.count(User.id)).scalar()
-    total_co2 = db.query(func.sum(UserStats.total_co2_kg)).scalar() or 0
+    if org_id:
+        total_users = db.query(func.count(User.id)).filter(User.org_id == org_id).scalar()
+        total_co2 = db.query(func.sum(UserStats.total_co2_kg)).join(User).filter(User.org_id == org_id).scalar() or 0
+        org_name = db.query(Organization.name).filter(Organization.id == org_id).scalar() or "Your Organization"
+    else:
+        total_users = db.query(func.count(User.id)).scalar()
+        total_co2 = db.query(func.sum(UserStats.total_co2_kg)).scalar() or 0
+        org_name = "Global Impact"
+    
     result = {
         "students_tracking": total_users,
         "total_co2_kg": round(total_co2, 2),
         "trees_equivalent": int(total_co2 / 21),
-        "campus": "Parul University",
+        "campus": org_name,
     }
 
-    set_cached("campus_stats", result)
+    set_cached(cache_key, result)
     return result
 
 if __name__ == "__main__":

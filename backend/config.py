@@ -19,4 +19,7 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings():
-    return Settings()
+    settings = Settings()
+    if settings.ENVIRONMENT.lower() == "production" and settings.SECRET_KEY == "your-super-secret-key-change-this-in-production":
+        raise ValueError("FATAL: SECRET_KEY is not set for production! You must set a secure SECRET_KEY environment variable.")
+    return settings

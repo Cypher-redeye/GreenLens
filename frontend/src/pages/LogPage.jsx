@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { activitiesAPI, statsAPI } from "../api";
 import { Slider } from "../components/Slider";
+import { ArrowRight, Camera } from "lucide-react";
 
 export const LogPage = () => {
   const [activity, setActivity] = useState("transport");
@@ -17,8 +18,8 @@ export const LogPage = () => {
   const activityTypes = {
     transport: { label: "Transport", units: ["km"], factor: 0.19 },
     food: { label: "Food", units: ["meal"], factor: 1.2 },
-    electricity: { label: "Electricity", units: ["kWh"], factor: 0.82 },
-    purchases: { label: "Purchases", units: ["items"], factor: 5.0 },
+    electricity: { label: "Energy", units: ["kWh"], factor: 0.82 },
+    purchases: { label: "Retail", units: ["items"], factor: 5.0 },
     waste: { label: "Waste", units: ["kg"], factor: 2.5 },
   };
 
@@ -51,7 +52,7 @@ export const LogPage = () => {
         receipt_id: receiptId,
         sdg_goal: sdgGoal,
       });
-      setSuccess("Activity logged successfully! 🌱");
+      setSuccess("Entry Recorded.");
       setValue(0);
       setCo2Preview(0);
       setImageHash(null);
@@ -80,7 +81,7 @@ export const LogPage = () => {
         if (data.image_hash) setImageHash(data.image_hash);
         if (data.receipt_id) setReceiptId(data.receipt_id);
         if (data.sdg_goal) setSdgGoal(data.sdg_goal);
-        setSuccess("AI successfully analyzed your image! ✨");
+        setSuccess("AI Analysis Complete.");
         setTimeout(() => setSuccess(""), 4000);
       }
     } catch (err) {
@@ -96,121 +97,130 @@ export const LogPage = () => {
   };
 
   return (
-    <div className="pt-24 min-h-screen bg-deep px-4 pb-10">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="heading-xl text-neon-green mb-2 text-center">
-          Log Your Impact
-        </h1>
-        <p className="text-white/40 text-center mb-8 max-w-2xl">Takes under 60 seconds</p>
-
-        <div className="card glass-mid">
-          {success && (
-            <div className="bg-emerald-bright/20 border border-emerald-bright text-emerald-glow px-4 py-3 rounded-lg mb-6">
-              {success}
-            </div>
-          )}
-
-          {/* AI Scanner Section */}
-          <div className="mb-8 p-6 glass-mid rounded-xl border border-emerald-glow relative overflow-hidden">
-            <div className="absolute inset-0 bg-neon-green/5 animate-pulse-glow pointer-events-none"></div>
-            <h2 className="heading-lg text-neon-green mb-6 flex items-center gap-2">
-              <span className="text-2xl">📸</span> Gemini Vision Scan
-            </h2>
-            <p className="text-sm text-white/40 mb-4">
-              Upload a grocery receipt or a meal photo. Our AI will automatically estimate its carbon footprint!
+    <div className="min-h-screen bg-[var(--bg-paper)] pt-20 px-8 md:px-24">
+      <div className="max-w-[100rem] mx-auto animate-fadeUp border-x border-[var(--border-fine)] min-h-[calc(100vh-80px)] flex flex-col md:flex-row">
+        
+        {/* Left Column: Form */}
+        <div className="w-full md:w-3/5 border-r border-[var(--border-fine)] flex flex-col">
+          
+          <div className="p-12 border-b border-[var(--border-thick)] bg-[var(--bg-surface)]">
+            <h1 className="text-5xl md:text-7xl font-display font-black tracking-tight leading-none mb-4">
+              Log Data.
+            </h1>
+            <p className="text-[var(--text-muted)] text-sm font-bold uppercase tracking-widest">
+              Manual Entry or AI Receipt Scan
             </p>
-            <label className="btn-secondary w-full flex justify-center items-center cursor-pointer relative z-10">
-              {scanning ? "Analyzing Image..." : "Upload Image to Scan"}
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                onChange={handleScan}
-                disabled={scanning}
+          </div>
+
+          <div className="p-12 border-b border-[var(--border-fine)] flex flex-col gap-12 bg-[var(--bg-paper)]">
+            
+            {/* Category Selector */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest mb-6 text-[var(--text-ink)]">
+                01 — Select Category
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-0 border border-[var(--border-fine)]">
+                {Object.entries(activityTypes).map(([key, { label }]) => (
+                  <button
+                    key={key}
+                    onClick={() => handleActivityChange(key)}
+                    className={`py-4 text-xs font-bold uppercase tracking-widest border-r border-[var(--border-fine)] last:border-r-0 transition-colors ${
+                      activity === key
+                        ? "bg-[var(--text-ink)] text-[var(--bg-paper)]"
+                        : "bg-[var(--bg-surface)] text-[var(--text-muted)] hover:bg-[var(--border-fine)]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* AI Scanner */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest mb-6 text-[var(--text-ink)]">
+                02 — Or Automate with AI
+              </label>
+              <label className="border border-dashed border-[var(--border-thick)] bg-[var(--bg-surface)] hover:bg-[var(--accent)] transition-colors p-8 flex flex-col items-center justify-center cursor-pointer group">
+                 <Camera className="w-8 h-8 mb-4 text-[var(--text-muted)] group-hover:text-[var(--text-ink)] transition-colors" />
+                 <span className="text-sm font-bold uppercase tracking-widest text-[var(--text-ink)] text-center">
+                   {scanning ? "Processing Image..." : "Upload Receipt or Photo"}
+                 </span>
+                 <input type="file" accept="image/*" className="hidden" onChange={handleScan} disabled={scanning} />
+              </label>
+            </div>
+
+            {/* Slider */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest mb-6 text-[var(--text-ink)]">
+                03 — Input Amount
+              </label>
+              <div className="flex items-end justify-between mb-4">
+                <span className="font-mono-num text-4xl font-bold">{value.toFixed(1)}</span>
+                <span className="text-sm font-bold uppercase tracking-widest text-[var(--text-muted)]">{unit}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="0.1"
+                value={value}
+                onChange={(e) => handleValueChange(parseFloat(e.target.value))}
+                className="w-full h-1 bg-[var(--border-fine)] appearance-none cursor-pointer mb-6"
               />
-            </label>
-          </div>
-
-          {/* Activity Type Selection */}
-          <div className="mb-8">
-            <label className="block text-lg font-bold mb-4">
-              What did you do?
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {Object.entries(activityTypes).map(([key, { label }]) => (
-                <button
-                  key={key}
-                  onClick={() => handleActivityChange(key)}
-                  className={`py-3 rounded-lg font-bold transition-all ${
-                    activity === key
-                      ? "bg-emerald-bright text-deep glow-border"
-                      : "bg-deep/50 border border-emerald-glow/30 hover:border-emerald-glow"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Value Slider */}
-          <div className="mb-8">
-            <label className="block text-lg font-bold mb-4">
-              Amount: {value.toFixed(1)} {unit}
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="0.1"
-              value={value}
-              onChange={(e) => handleValueChange(parseFloat(e.target.value))}
-              className="w-full h-2 bg-deep/50 rounded-lg appearance-none cursor-pointer accent-emerald-glow"
-            />
-            <div className="flex gap-2 mt-4">
-              {[10, 25, 50, 75, 100].map((v) => (
-                <button
-                  key={v}
-                  onClick={() => handleValueChange(v)}
-                  className="px-3 py-1 bg-emerald-glow/20 border border-emerald-glow text-emerald-glow rounded text-sm hover:bg-emerald-glow/40"
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* CO2 Preview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-emerald-bright/10 to-emerald-glow/10 rounded-lg border border-emerald-glow/30">
-            <div className="card glass-mid text-center py-4 text-white/40">
-              <h1 className="heading-xl text-neon-green mb-2">🤖 Your AI Coach</h1>
-              <div className="text-5xl font-bold text-neon-green">
-                {co2Preview.toFixed(2)}
-              </div>
-              <div className="text-sm text-white/40 mt-2">kg CO₂ Impact</div>
-              <div className="text-xs text-white/30 mt-1">
-                = {(co2Preview / 21).toFixed(2)} trees
+              <div className="flex flex-wrap gap-2">
+                {[10, 25, 50, 75, 100].map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => handleValueChange(v)}
+                    className="px-4 py-2 border border-[var(--border-fine)] bg-[var(--bg-surface)] text-xs font-bold font-mono-num hover:border-[var(--text-ink)] transition-colors"
+                  >
+                    {v}
+                  </button>
+                ))}
               </div>
             </div>
+
+          </div>
+        </div>
+
+        {/* Right Column: Output / Submission */}
+        <div className="w-full md:w-2/5 flex flex-col bg-[var(--bg-surface)] relative">
+          
+          <div className="flex-1 p-12 border-b border-[var(--border-thick)] flex flex-col justify-center items-center text-center">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-8">
+              Estimated Footprint
+            </h2>
+            <div className="font-mono-num text-8xl md:text-[8rem] font-bold tracking-tighter leading-none">
+              {co2Preview.toFixed(1)}
+            </div>
+            <div className="text-sm font-bold uppercase tracking-widest text-[var(--text-ink)] mt-4">
+              KG CO₂ Equivalent
+            </div>
+
+            {sdgGoal && (
+               <div className="mt-12 p-4 border border-[var(--text-ink)] bg-[var(--accent)] text-[var(--text-ink)] inline-block">
+                 <p className="text-xs font-bold uppercase tracking-widest mb-1">Aligned Standard</p>
+                 <p className="text-sm font-serif italic font-bold">{sdgGoal}</p>
+               </div>
+            )}
+
+            {success && (
+               <div className="mt-12 text-sm font-bold uppercase tracking-widest text-green-600 border border-green-600 p-4">
+                 {success}
+               </div>
+            )}
           </div>
 
-          {sdgGoal && (
-            <div className="mb-8 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg text-center">
-              <span className="text-2xl block mb-2">🌍</span>
-              <p className="text-blue-200 text-sm font-semibold">Global Standard Alignment</p>
-              <p className="text-blue-100 text-lg">{sdgGoal}</p>
-            </div>
-          )}
-
-          {/* Submit Button */}
           <button
             onClick={handleSubmit}
             disabled={loading || value === 0}
-            className="btn-primary w-full disabled:opacity-50 text-lg py-4 font-bold"
+            className="w-full py-10 bg-[var(--text-ink)] text-[var(--bg-paper)] text-2xl font-bold uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-[var(--accent)] hover:text-[var(--text-ink)] transition-colors disabled:opacity-50 disabled:hover:bg-[var(--text-ink)] disabled:hover:text-[var(--bg-paper)]"
           >
-            {loading ? "Logging..." : "Log Activity ✨"}
+            {loading ? "Recording..." : "Submit Entry"} <ArrowRight className="w-6 h-6" />
           </button>
         </div>
+
       </div>
     </div>
   );

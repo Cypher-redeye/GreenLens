@@ -1,21 +1,21 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Leaf, LogOut, LayoutDashboard, PenLine, Trophy, Brain, Globe2, Building } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useAuth } from "../AuthContext";
 
 const NAV_ITEMS = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/log",       label: "Log",       icon: PenLine },
-  { to: "/coach",     label: "Coach",     icon: Brain },
-  { to: "/leaderboard", label: "Ranks",  icon: Trophy },
-  { to: "/impact",    label: "Impact",    icon: Globe2 },
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/log",       label: "Log" },
+  { to: "/coach",     label: "Coach" },
+  { to: "/leaderboard", label: "Ranks" },
+  { to: "/impact",    label: "Impact" },
 ];
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
   
   const navItems = user?.role === "admin" 
-    ? [...NAV_ITEMS, { to: "/admin", label: "Admin", icon: Building }]
+    ? [...NAV_ITEMS, { to: "/admin", label: "Admin" }]
     : NAV_ITEMS;
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,44 +37,28 @@ export const Navbar = () => {
   };
 
   return (
-    <nav
-      style={{
-        background: "rgba(3, 7, 10, 0.7)",
-        backdropFilter: "blur(20px) saturate(1.6)",
-        borderBottom: "1px solid rgba(105, 240, 174, 0.07)",
-      }}
-      className="fixed top-0 w-full z-50"
-    >
-      <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-[var(--bg-paper)] border-b border-[var(--border-thick)] h-20 flex justify-center">
+      <nav className="w-full px-8 md:px-24 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-7 h-7 rounded-lg bg-emerald-glow/10 border border-emerald-glow/20 flex items-center justify-center group-hover:border-emerald-glow/50 transition-all">
-            <Leaf className="w-4 h-4 text-neon-green" />
-          </div>
-          <span
-            className="text-sm font-bold tracking-tight"
-            style={{ fontFamily: "Space Grotesk, sans-serif" }}
-          >
-            Green<span className="text-neon-green">Lens</span>
-          </span>
+        <Link to="/" className="text-xl font-black tracking-tight uppercase font-display">
+          GreenLens<span className="text-[var(--accent)]">.</span>
         </Link>
 
         {/* Nav Links */}
         {user && (
-          <div className="flex items-center gap-1">
-            {navItems.map(({ to, label, icon: Icon }) => {
+          <div className="hidden md:flex items-center gap-8">
+            {navItems.map(({ to, label }) => {
               const active = location.pathname === to;
               return (
                 <Link
                   key={to}
                   to={to}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                  className={`text-xs font-bold uppercase tracking-widest transition-colors ${
                     active
-                      ? "bg-emerald-glow/10 text-neon-green border border-emerald-glow/20"
-                      : "text-white/40 hover:text-white/80 hover:bg-white/5"
+                      ? "text-[var(--text-ink)] border-b-2 border-[var(--text-ink)] pb-1"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-ink)]"
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
                   {label}
                 </Link>
               );
@@ -83,37 +67,35 @@ export const Navbar = () => {
         )}
 
         {/* Right side */}
-        {user && (
-          <div className="flex items-center gap-2">
-            {/* Region */}
+        {user ? (
+          <div className="flex items-center gap-6">
             <select
               value={region}
               onChange={handleRegionChange}
-              className="text-xs px-2 py-1 rounded-lg border bg-transparent cursor-pointer focus:outline-none"
-              style={{
-                borderColor: "rgba(105, 240, 174, 0.15)",
-                color: "rgba(105, 240, 174, 0.6)",
-              }}
+              className="text-xs uppercase tracking-widest font-bold px-4 py-2 border border-[var(--border-fine)] bg-transparent cursor-pointer focus:outline-none focus:border-[var(--text-ink)] transition-colors"
             >
-              <option value="IN" style={{ background: "#090F0C" }}>🇮🇳 IN Grid</option>
-              <option value="US" style={{ background: "#090F0C" }}>🇺🇸 US Grid</option>
+              <option value="IN">IN Grid</option>
+              <option value="US">US Grid</option>
             </select>
 
-            {/* User pill */}
-            <div className="pill pill-green text-xs">
-              {user.username}
-            </div>
-
-            {/* Logout */}
             <button
               onClick={handleLogout}
-              className="btn-ghost text-xs !px-2 !py-1.5"
+              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-[#FF5D5D] transition-colors"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
+        ) : (
+          <div className="flex items-center gap-8">
+             <Link to="/login" className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-ink)]">
+              Sign In
+            </Link>
+             <Link to="/register" className="text-xs font-bold uppercase tracking-widest text-[var(--text-ink)] border-b-2 border-[var(--accent)] hover:border-[var(--text-ink)] transition-colors pb-1">
+              Start Free
+            </Link>
+          </div>
         )}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 };

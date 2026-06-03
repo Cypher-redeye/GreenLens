@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authAPI.login(email, password);
       localStorage.setItem("authToken", res.data.access_token);
-      setUser({ id: res.data.user_id, username: res.data.username });
+      await fetchUser();
       setError(null);
       return res.data;
     } catch (err) {
@@ -46,12 +46,20 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authAPI.register(data);
       localStorage.setItem("authToken", res.data.access_token);
-      setUser({ id: res.data.user_id, username: res.data.username });
+      await fetchUser();
       setError(null);
       return res.data;
     } catch (err) {
-      setError(err.response?.data?.detail || "Registration failed");
-      throw err;
+      let errorMsg = "Registration failed";
+      if (err.response?.data?.detail) {
+         if (Array.isArray(err.response.data.detail)) {
+            errorMsg = err.response.data.detail.map(e => e.msg).join(", ");
+         } else {
+            errorMsg = err.response.data.detail;
+         }
+      }
+      setError(errorMsg);
+      throw new Error(errorMsg);
     }
   };
 

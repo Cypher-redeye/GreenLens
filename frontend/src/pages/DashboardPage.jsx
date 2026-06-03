@@ -1,15 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { statsAPI, activitiesAPI, nudgesAPI } from "../api";
-import { TrendingUp, Zap, Flame, Trees, ArrowUpRight } from "lucide-react";
-import {
-  AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
+import { ArrowRight, Activity, Flame, TreePine, Zap } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Link } from "react-router-dom";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-/* Animated counter hook */
 function useCounter(target, duration = 900) {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -29,10 +25,10 @@ function useCounter(target, duration = 900) {
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="glass-mid rounded-xl px-4 py-3 text-sm">
-      <p className="text-white/50 mb-1">{label}</p>
-      <p className="font-mono-num font-semibold text-neon-green">
-        {payload[0].value} kg CO₂
+    <div className="bg-[var(--text-ink)] text-[var(--bg-paper)] p-4 border border-[var(--border-thick)] rounded-none shadow-2xl">
+      <p className="text-xs uppercase tracking-widest opacity-60 mb-2">{label}</p>
+      <p className="font-mono-num font-bold text-lg">
+        {payload[0].value} <span className="text-xs font-sans">KG CO₂</span>
       </p>
     </div>
   );
@@ -65,202 +61,147 @@ export const DashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="pt-32 flex flex-col items-center gap-4 text-white/30">
-        <div className="w-8 h-8 rounded-full border-2 border-neon-green border-t-transparent animate-spin" />
-        <span className="text-sm">Loading dashboard…</span>
+      <div className="min-h-screen pt-32 flex flex-col items-center justify-center bg-[var(--bg-paper)]">
+        <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-ink)] animate-pulse">Loading Ledger...</div>
       </div>
     );
   }
 
   if (!dashboard) return (
-    <div className="pt-32 text-center text-red-400 text-sm">
-      Failed to load dashboard. Please refresh.
+    <div className="min-h-screen pt-32 flex justify-center bg-[var(--bg-paper)] text-red-600 font-bold uppercase tracking-widest text-xs">
+      Failed to load dashboard.
     </div>
   );
 
-  /* Build real weekly chart */
   const weeklyMap = Object.fromEntries(DAYS.map(d => [d, 0]));
   activities.forEach(a => {
     const d = DAYS[new Date(a.created_at).getDay()];
     weeklyMap[d] = +(weeklyMap[d] + a.co2_kg).toFixed(2);
   });
   const weeklyData = DAYS.map(d => ({ day: d, co2: weeklyMap[d] }));
-
   const streak = dashboard.stats?.streak_days ?? 0;
-  const todayCo2 = dashboard.today_co2?.toFixed(2) ?? "0.00";
   const recent = dashboard.recent_activities ?? [];
 
-  const TYPE_ICON = {
-    transport: "🚗",
-    food: "🍽️",
-    electricity: "⚡",
-    purchases: "🛍️",
-    waste: "♻️",
-  };
-
   return (
-    <div className="min-h-screen bg-deep pt-16 pb-12 px-4 relative">
-
-      {/* Glow blobs */}
-      <div className="glow-blob glow-blob-green w-96 h-96 top-0 left-0" />
-      <div className="glow-blob glow-blob-gold w-72 h-72 bottom-20 right-0" />
-
-      <div className="max-w-7xl mx-auto relative z-10">
-
-        {/* Header */}
-        <div className="flex items-center justify-between py-8">
+    <div className="min-h-screen bg-[var(--bg-paper)] pt-20 px-8 md:px-24">
+      <div className="max-w-[100rem] mx-auto animate-fadeUp border-x border-[var(--border-fine)] min-h-[calc(100vh-80px)]">
+        
+        {/* Header Section */}
+        <div className="p-12 border-b border-[var(--border-thick)] flex flex-col md:flex-row justify-between items-start md:items-end gap-8 bg-[var(--bg-surface)]">
           <div>
-            <h1 className="heading-lg text-white">
-              Hey, {dashboard.user?.username} 👋
-            </h1>
-            <p className="text-white/40 text-sm mt-1">
-              Here's your carbon footprint at a glance
+            <p className="font-mono-num text-[var(--text-muted)] text-sm tracking-widest uppercase mb-4">
+              USER.ID // {dashboard.user?.username}
             </p>
+            <h1 className="text-5xl md:text-7xl font-display font-black tracking-tight leading-none">
+              Overview.
+            </h1>
           </div>
           <Link to="/log" className="btn-primary">
-            <Zap className="w-4 h-4" /> Log Activity
+            Log Activity <ArrowRight className="w-5 h-5 ml-2" />
           </Link>
         </div>
 
-        {/* ── Bento Grid ─────────────────────────────────── */}
-        <div className="grid grid-cols-12 gap-4 auto-rows-auto">
-
-          {/* Total CO₂ — wide */}
-          <div className="col-span-12 md:col-span-4 card flex flex-col justify-between min-h-[140px]">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-white/30 uppercase tracking-widest">Total CO₂</span>
-              <TrendingUp className="w-4 h-4 text-neon-green opacity-50" />
+        {/* Swiss Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 border-b border-[var(--border-thick)]">
+          
+          {/* Main KPI */}
+          <div className="col-span-1 md:col-span-2 p-12 border-b md:border-b-0 md:border-r border-[var(--border-fine)] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-8">
+              <span className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">Lifetime Footprint</span>
+              <Activity className="w-5 h-5 text-[var(--text-ink)]" />
             </div>
             <div>
-              <div className="font-mono-num text-5xl font-bold text-neon-green leading-none">
+              <div className="font-mono-num text-7xl md:text-9xl font-bold tracking-tighter leading-none mb-2">
                 {totalCo2.toFixed(1)}
               </div>
-              <div className="text-xs text-white/30 mt-1">kg tracked lifetime</div>
-            </div>
-            <div className="pill pill-green self-start mt-3">
-              Today: {todayCo2} kg
+              <div className="text-sm font-bold uppercase tracking-widest text-[var(--text-ink)]">Kilograms of CO₂</div>
             </div>
           </div>
 
-          {/* XP */}
-          <div className="col-span-6 md:col-span-2 card-gold flex flex-col justify-between min-h-[140px]">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-white/30 uppercase tracking-widest">XP</span>
-              <Zap className="w-4 h-4 text-gold opacity-50" />
+          {/* Sub KPIs */}
+          <div className="col-span-1 md:col-span-1 border-b md:border-b-0 md:border-r border-[var(--border-fine)] grid grid-rows-2">
+            <div className="p-8 border-b border-[var(--border-fine)] flex flex-col justify-between bg-[var(--accent)]">
+              <span className="text-xs font-bold uppercase tracking-widest text-[var(--text-ink)]">Experience</span>
+              <div className="font-mono-num text-5xl font-bold mt-4">{Math.round(xp)}</div>
             </div>
-            <div className="font-mono-num text-4xl font-bold text-gold">{Math.round(xp)}</div>
-            <div className="text-xs text-white/30 mt-1">points earned</div>
+            <div className="p-8 flex flex-col justify-between bg-[#FF4D00] text-[#F7F5F0]">
+              <span className="text-xs font-bold uppercase tracking-widest opacity-80">Current Streak</span>
+              <div className="font-mono-num text-5xl font-bold mt-4">{streak}</div>
+            </div>
           </div>
 
-          {/* Streak */}
-          <div className="col-span-6 md:col-span-2 card flex flex-col justify-between min-h-[140px]">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-white/30 uppercase tracking-widest">Streak</span>
-              <Flame className="w-4 h-4 text-orange-400 opacity-50" />
+          <div className="col-span-1 md:col-span-1 p-8 flex flex-col justify-between bg-[var(--bg-surface)]">
+             <div className="flex items-center justify-between mb-8">
+              <span className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">Trees Saved</span>
+              <TreePine className="w-5 h-5 text-[var(--text-ink)]" />
             </div>
-            <div className="font-mono-num text-4xl font-bold text-orange-400">{streak}</div>
-            <div className="text-xs text-white/30 mt-1">days in a row 🔥</div>
+            <div className="font-mono-num text-6xl font-bold tracking-tighter">
+              {Math.round(trees)}
+            </div>
           </div>
 
-          {/* Trees */}
-          <div className="col-span-12 md:col-span-4 card flex flex-col justify-between min-h-[140px]"
-            style={{ background: "rgba(34,197,94,0.04)", borderColor: "rgba(34,197,94,0.15)" }}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-white/30 uppercase tracking-widest">Trees Saved</span>
-              <span className="text-green-400 opacity-50 text-lg">🌲</span>
-            </div>
-            <div className="font-mono-num text-5xl font-bold text-green-400">{Math.round(trees)}</div>
-            <div className="text-xs text-white/30 mt-1">equivalent trees planted</div>
-          </div>
+        </div>
 
-          {/* Weekly Bar Chart */}
-          <div className="col-span-12 lg:col-span-7 card">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="font-display font-semibold text-white">Weekly Emissions</h2>
-                <p className="text-xs text-white/30 mt-0.5">CO₂ kg per day this week</p>
-              </div>
-              {weeklyData.every(d => d.co2 === 0) && (
-                <span className="pill pill-green text-xs">No data yet</span>
-              )}
+        {/* Charts & Feed */}
+        <div className="grid grid-cols-1 md:grid-cols-3">
+          
+          {/* Chart */}
+          <div className="col-span-1 md:col-span-2 p-12 border-b md:border-b-0 md:border-r border-[var(--border-fine)] bg-[var(--bg-surface)]">
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-2xl font-bold uppercase tracking-wide">Weekly Ledger</h2>
+              <span className="pill">Current</span>
             </div>
-            {weeklyData.every(d => d.co2 === 0) ? (
-              <div className="h-48 flex flex-col items-center justify-center text-white/20 text-sm gap-2">
-                <span className="text-3xl">📊</span>
-                Start logging to see your chart
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={weeklyData} barSize={28}>
-                  <defs>
-                    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#5EFFA0" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#5EFFA0" stopOpacity={0.1} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="4 4" />
-                  <XAxis dataKey="day" stroke="rgba(255,255,255,0.2)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis stroke="rgba(255,255,255,0.2)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} unit=" kg" />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-                  <Bar dataKey="co2" fill="url(#barGrad)" radius={[6, 6, 0, 0]} />
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyData} barSize={40}>
+                  <CartesianGrid stroke="var(--border-fine)" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="day" stroke="var(--text-ink)" tick={{ fontSize: 10, fontFamily: 'Inter', fontWeight: 600 }} axisLine={false} tickLine={false} dy={10} />
+                  <YAxis stroke="var(--text-ink)" tick={{ fontSize: 10, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} dx={-10} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(11,18,14,0.03)" }} />
+                  <Bar dataKey="co2" fill="var(--text-ink)" />
                 </BarChart>
               </ResponsiveContainer>
-            )}
+            </div>
           </div>
 
-          {/* Recent Activities */}
-          <div className="col-span-12 lg:col-span-5 card flex flex-col">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-semibold text-white">Recent Activities</h2>
-              <Link to="/log" className="text-xs text-neon-green/60 hover:text-neon-green flex items-center gap-1 transition-colors">
-                Add new <ArrowUpRight className="w-3 h-3" />
-              </Link>
+          {/* Feed */}
+          <div className="col-span-1 p-12 flex flex-col bg-[var(--bg-paper)]">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-sm font-bold uppercase tracking-widest">Recent Activity</h2>
+              <Link to="/log" className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-ink)] border-b border-transparent hover:border-[var(--text-ink)]">View All</Link>
             </div>
-            {recent.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-white/20 text-sm gap-2">
-                <span className="text-3xl">🌱</span>
-                No activities yet
-              </div>
-            ) : (
-              <div className="space-y-3 flex-1">
-                {recent.slice(0, 5).map((a) => (
-                  <div key={a.id} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{TYPE_ICON[a.activity_type] ?? "📌"}</span>
-                      <div>
-                        <div className="text-sm font-medium capitalize text-white/80">{a.activity_type}</div>
-                        <div className="text-xs text-white/30">
-                          {a.value} {a.unit} · {new Date(a.created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
-                        </div>
-                      </div>
+            <div className="space-y-6 flex-1">
+              {recent.slice(0, 5).map((a) => (
+                <div key={a.id} className="flex items-start justify-between pb-4 border-b border-[var(--border-fine)]">
+                  <div>
+                    <div className="text-sm font-bold uppercase tracking-widest">{a.activity_type}</div>
+                    <div className="text-xs text-[var(--text-muted)] font-mono-num mt-1">
+                      {a.value} {a.unit}
                     </div>
-                    <span className="font-mono-num text-sm font-semibold text-neon-green">
-                      {a.co2_kg} kg
-                    </span>
                   </div>
-                ))}
-              </div>
-            )}
+                  <span className="font-mono-num text-sm font-bold bg-[var(--accent)] px-2 py-1">
+                    +{a.co2_kg} kg
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* AI Nudges */}
-          {nudges.length > 0 && (
-            <div className="col-span-12 card"
-              style={{ background: "rgba(105, 240, 174, 0.03)", borderColor: "rgba(105, 240, 174, 0.1)" }}>
-              <h2 className="font-display font-semibold text-white mb-4 flex items-center gap-2">
-                🤖 <span>Latest AI Coach Nudge</span>
-                <span className="pill pill-green">Gemini</span>
-              </h2>
-              <p className="text-white/70 text-sm leading-relaxed">{nudges[0].content}</p>
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-xs text-white/25">{new Date(nudges[0].created_at).toLocaleString()}</span>
-                <Link to="/coach" className="text-xs text-neon-green/60 hover:text-neon-green transition-colors flex items-center gap-1">
-                  See all nudges <ArrowUpRight className="w-3 h-3" />
-                </Link>
-              </div>
-            </div>
-          )}
         </div>
+        
+        {/* Nudge Banner */}
+        {nudges.length > 0 && (
+          <div className="border-t border-[var(--border-thick)] bg-[var(--text-ink)] text-[var(--bg-paper)] p-8 flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
+            <div className="max-w-3xl">
+               <div className="text-xs font-bold uppercase tracking-widest text-[var(--accent)] mb-2">AI Analysis</div>
+               <p className="text-lg font-medium leading-relaxed">{nudges[0].content}</p>
+            </div>
+            <Link to="/coach" className="btn-primary" style={{ background: 'var(--bg-paper)', color: 'var(--text-ink)', borderColor: 'var(--bg-paper)' }}>
+              Open Coach
+            </Link>
+          </div>
+        )}
+
       </div>
     </div>
   );

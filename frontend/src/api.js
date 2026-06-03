@@ -24,7 +24,7 @@ export const authAPI = {
 
 export const activitiesAPI = {
   log: (data) => api.post("/api/activities", data),
-  getList: (limit = 10) => api.get("/api/activities", { params: { limit } }),
+  getList: (limit = 10, orgWide = false) => api.get("/api/activities", { params: { limit, org_wide: orgWide } }),
   scan: (file) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -61,7 +61,11 @@ export const userAPI = {
 export const organizationsAPI = {
   create: (name) => api.post("/api/organizations", { name }),
   getStats: (orgId) => api.get(`/api/organizations/${orgId}/stats`),
-  getExportUrl: (orgId) => `${API_URL}/api/organizations/${orgId}/export`
+  exportData: (orgId, format = "csv") => api.get(`/api/organizations/${orgId}/export`, {
+    params: { format },
+    responseType: 'blob'
+  }),
+  getByInviteCode: (code) => api.get(`/api/organizations/invite/${code}`)
 };
 
 export default api;
