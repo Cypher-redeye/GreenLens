@@ -40,6 +40,15 @@ logger = logging.getLogger("greenlens")
 
 Base.metadata.create_all(bind=engine)
 
+# Fail-safe to add invite_code column if it's missing (e.g. on live DBs without Alembic)
+from sqlalchemy import text
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE organizations ADD COLUMN invite_code VARCHAR"))
+        conn.commit()
+except Exception:
+    pass # Column already exists or another DB error
+
 app = FastAPI(
     title="GreenLens API",
     version="2.0.0",
